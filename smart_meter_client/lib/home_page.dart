@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:signalr_netcore/hub_connection.dart';
 import 'package:signalr_netcore/hub_connection_builder.dart';
@@ -21,32 +23,44 @@ class SmartMeterAppPage extends StatefulWidget {
 }
 
 class _SmartMeterAppPageState extends State<SmartMeterAppPage> {
-  late HubConnection hubConn;
-  int viewCount = 0;
+  late HubConnection hubConn; 
+  late double bill;
   
-  void newConnectionReceived(){
-    hubConn.on("updateTotalViews", (views) 
+  void newBillReceived() {
+    hubConn.on("calculateBill", (serverCalculatedBill) 
       {
         setState(() {
-          viewCount = views?[0] as int;
+          bill = serverCalculatedBill?[0] as double;
         });        
       }
     );
   }
 
+  void initialBillReceived(){
+    hubConn.on("receiveInitialBill", (serverCalculatedInitialBill) 
+      {
+        setState(() {
+          bill = serverCalculatedInitialBill?[0] as double;
+        });        
+      }
+    );
+  }
+
+  void sendReading() async {
+    await hubConn.invoke("CalculateNewBill", args:[bill, 10.00]);
+      // server responds with the new bill based on the new reading just sent
+      newBillReceived();    
+  }  
+
   initServerConnection() async
   {
-    hubConn = HubConnectionBuilder().withUrl("http://localhost:5006/hubs/userCount").build();
-
+    hubConn = HubConnectionBuilder().withUrl("http://localhost:5006/hubs/connect").withAutomaticReconnect().build();
+    initialBillReceived();   
     try {
       await hubConn.start();
     } catch (e) {
       print("Hit this error $e");
     }
-    
-    hubConn.invoke("NewWindowLoaded");
-    
-    newConnectionReceived();     
   } 
 
   @override
@@ -82,11 +96,21 @@ class _SmartMeterAppPageState extends State<SmartMeterAppPage> {
           // wireframe for each widget.
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text('Page Views:'),
+            const Text('New Bill:'),
             Text(
-              '$viewCount',
+              '$bill',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
+            TextButton(
+              style: ButtonStyle(
+                foregroundColor: WidgetStateProperty.all<Color>(Colors.blue),
+              ),
+              onPressed: () { 
+                print("ive been clicked");
+                sendReading(); 
+              },
+              child: Text('Make new reading'),
+            )
           ],
         ),
       ),

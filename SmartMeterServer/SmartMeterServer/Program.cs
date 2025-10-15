@@ -25,7 +25,7 @@ app.UseRouting();
 app.UseAuthorization();
 
 app.MapRazorPages();
-app.MapHub<FirstHub>("/hubs/userCount");
+app.MapHub<FirstHub>("/hubs/connect");
 app.UseCors("AllowAll");
 
 app.Run();

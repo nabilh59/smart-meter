@@ -1,15 +1,22 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using System.Collections.Concurrent;
 
 namespace SmartMeter.Hubs
 {
     public class FirstHub : Hub
     {
-        public static int TotalViews { get; set; } = 0;
+        public static double InitialBill { get; set; } = 0.00;
 
-        public async Task NewWindowLoaded()
+        // runs as soon as a connection is detected
+        public override async Task OnConnectedAsync()
         {
-            TotalViews++;
-            await Clients.All.SendAsync("updateTotalViews", TotalViews);
+            await Clients.Caller.SendAsync("receiveInitialBill", InitialBill);
+            await base.OnConnectedAsync();
+        }
+        public async Task CalculateNewBill(double currentTotalBill, double newReading)
+        {
+            double newBill = currentTotalBill + newReading;
+            await Clients.Caller.SendAsync("calculateBill", newBill);
         }
     }
 }

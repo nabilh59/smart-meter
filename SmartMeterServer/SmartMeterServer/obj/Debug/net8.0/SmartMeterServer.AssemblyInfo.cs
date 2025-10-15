@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SmartMeterServer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+171b800972afc4074efbc61ae4c374745e903c8d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bf24c49e7e7ba8d33bafb2ea20e2c4e35753184a")]
 [assembly: System.Reflection.AssemblyProductAttribute("SmartMeterServer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SmartMeterServer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

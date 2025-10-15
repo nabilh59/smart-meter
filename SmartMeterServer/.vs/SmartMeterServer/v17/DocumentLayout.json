@@ -3,12 +3,12 @@
   "WorkspaceRootPath": "C:\\Users\\onouweng\\source\\repos\\smart-meter\\SmartMeterServer\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{44755899-811E-489D-878C-B13866B4589E}|SmartMeterServer\\SmartMeterServer.csproj|c:\\users\\onouweng\\source\\repos\\smart-meter\\smartmeterserver\\smartmeterserver\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{44755899-811E-489D-878C-B13866B4589E}|SmartMeterServer\\SmartMeterServer.csproj|solutionrelative:smartmeterserver\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{44755899-811E-489D-878C-B13866B4589E}|SmartMeterServer\\SmartMeterServer.csproj|c:\\users\\onouweng\\source\\repos\\smart-meter\\smartmeterserver\\smartmeterserver\\hubs\\firsthub.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{44755899-811E-489D-878C-B13866B4589E}|SmartMeterServer\\SmartMeterServer.csproj|solutionrelative:smartmeterserver\\hubs\\firsthub.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{44755899-811E-489D-878C-B13866B4589E}|SmartMeterServer\\SmartMeterServer.csproj|c:\\users\\onouweng\\source\\repos\\smart-meter\\smartmeterserver\\smartmeterserver\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{44755899-811E-489D-878C-B13866B4589E}|SmartMeterServer\\SmartMeterServer.csproj|solutionrelative:smartmeterserver\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{44755899-811E-489D-878C-B13866B4589E}|SmartMeterServer\\SmartMeterServer.csproj|c:\\users\\onouweng\\source\\repos\\smart-meter\\smartmeterserver\\smartmeterserver\\smartmeterserver.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|",
@@ -22,7 +22,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Document",
@@ -38,26 +38,26 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Users\\onouweng\\source\\repos\\smart-meter\\SmartMeterServer\\SmartMeterServer\\Program.cs",
               "RelativeDocumentMoniker": "SmartMeterServer\\Program.cs",
               "ToolTip": "C:\\Users\\onouweng\\source\\repos\\smart-meter\\SmartMeterServer\\SmartMeterServer\\Program.cs",
               "RelativeToolTip": "SmartMeterServer\\Program.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB8AAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-09-30T15:42:17.384Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "FirstHub.cs",
               "DocumentMoniker": "C:\\Users\\onouweng\\source\\repos\\smart-meter\\SmartMeterServer\\SmartMeterServer\\Hubs\\FirstHub.cs",
               "RelativeDocumentMoniker": "SmartMeterServer\\Hubs\\FirstHub.cs",
               "ToolTip": "C:\\Users\\onouweng\\source\\repos\\smart-meter\\SmartMeterServer\\SmartMeterServer\\Hubs\\FirstHub.cs",
               "RelativeToolTip": "SmartMeterServer\\Hubs\\FirstHub.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-09-30T15:41:52.929Z",
               "EditorCaption": ""
