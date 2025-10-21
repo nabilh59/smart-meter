@@ -5,9 +5,9 @@ namespace SmartMeter.Hubs
 {
     public class FirstHub : Hub
     {
-        public static double InitialBill { get; set; } = 0.00;
+        public static double InitialBill { get; set; } = 50.00;
 
-        // runs as soon as a connection is detected
+        //runs as soon as a connection is detected
         public override async Task OnConnectedAsync()
         {
             await Clients.Caller.SendAsync("receiveInitialBill", InitialBill);

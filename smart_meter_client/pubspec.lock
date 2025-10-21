@@ -195,6 +195,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.5.2"
+  reactable:
+    dependency: "direct main"
+    description:
+      name: reactable
+      sha256: b30e7030e82276d994cd7f45772f35d5e32eeeba0449d6550cba5817236a69b7
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.7"
   shelf:
     dependency: transitive
     description:
