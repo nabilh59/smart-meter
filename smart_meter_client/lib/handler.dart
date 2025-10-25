@@ -2,18 +2,34 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:reactable/reactable.dart';
-import 'package:signalr_netcore/hub_connection.dart';
-import 'package:signalr_netcore/hub_connection_builder.dart';
+import 'package:signalr_netcore/signalr_client.dart';
 
 class ServerHandler {
-  // handles connection to server and communication with it (/hubs/connect matches what is in the server code) 
-  HubConnection hubConn = HubConnectionBuilder().withUrl("http://localhost:5006/hubs/connect").build();  
+  late HubConnection hubConn;
 
-  // Reactable to hold the current bill value 
+  // assign token for each client instance
+  final String clientAPIToken = "client-api-token";
+
+  // Reactable to hold the current bill value
   Reactable<double> billReactable = 0.0.asReactable;
 
   ServerHandler() {
+    setupConnection();
     registerInitialHandler(); // handlers must be registered before starting connection
+  }
+
+  void setupConnection() {
+    // create HTTPConnectionOptions with accessTokenFactory
+    final httpConOptions = HttpConnectionOptions(
+      accessTokenFactory: () async => clientAPIToken,
+      transport: HttpTransportType.WebSockets,
+    );
+
+    // handles connection to server and communication with it (/hubs/connect matches what is in the server code)
+    // changed http to https for TLS encryption
+    hubConn = HubConnectionBuilder()
+    .withUrl("https://localhost:5001/hubs/connect", options: httpConOptions)
+    .build();
   }
 
   // sends a new reading to the server every 15 to 60 seconds
