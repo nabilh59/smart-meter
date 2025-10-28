@@ -4,6 +4,9 @@ import 'dart:math';
 import 'package:reactable/reactable.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 
+import 'package:logger/logger.dart';
+final logger = Logger();
+
 class ServerHandler {
   late HubConnection hubConn;
 
@@ -44,6 +47,12 @@ class ServerHandler {
   }
 
   sendReading(double reading) async {
+    // validate reading is a positive decimal
+    if (reading.isNaN || reading.isInfinite || reading < 0) {
+      logger.e("Client-side validation failed: Invalid reading- Must be a positive decimal.");
+      return;
+    }
+
     await hubConn.send("CalculateNewBill", args:[billReactable.value, reading]);   
   }  
 
@@ -54,7 +63,16 @@ class ServerHandler {
   registerInitialHandler(){    
     hubConn.on("receiveInitialBill", setBill);
 
-    hubConn.on("calculateBill", setBill); 
+    hubConn.on("calculateBill", setBill);
+
+    // listen for error messages from the server and log them
+    hubConn.on("error", (args) {
+      if (args !=null && args.isNotEmpty) {
+        logger.e("Server error: ${args[0]}");
+      } else {
+        logger.e("Unknown server error");
+      }
+    });
   }
 
   initServerConnection() async
