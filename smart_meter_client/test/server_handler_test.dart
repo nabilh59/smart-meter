@@ -19,7 +19,6 @@ void main() {
   test('Server error message is received by client and logged correctly', () {
     final mockLogger = MockLogger();
     final mockConn = MockHubConnection();
-
     final handler = ServerHandler(logger: mockLogger);
     handler.hubConn = mockConn;
 

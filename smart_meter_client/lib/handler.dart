@@ -9,6 +9,7 @@ import 'package:logger/logger.dart';
 class ServerHandler {
   final Logger logger;
   late HubConnection hubConn;
+  late HttpConnectionOptions _httpConOpts;
 
   // assign token for each client instance
   final String clientAPIToken = "client-api-token";
@@ -23,7 +24,7 @@ class ServerHandler {
 
   void setupConnection() {
     // create HTTPConnectionOptions with accessTokenFactory
-    final httpConOptions = HttpConnectionOptions(
+    _httpConOpts = HttpConnectionOptions(
       accessTokenFactory: () async => clientAPIToken,
       transport: HttpTransportType.WebSockets,
     );
@@ -31,9 +32,11 @@ class ServerHandler {
     // handles connection to server and communication with it (/hubs/connect matches what is in the server code)
     // changed http to https for TLS encryption
     hubConn = HubConnectionBuilder()
-    .withUrl("https://localhost:5001/hubs/connect", options: httpConOptions)
+    .withUrl("https://localhost:5001/hubs/connect", options: _httpConOpts)
     .build();
   }
+
+  HttpConnectionOptions get httpConOptions => _httpConOpts;
 
   // sends a new reading to the server every 15 to 60 seconds
   sendReadings() {
