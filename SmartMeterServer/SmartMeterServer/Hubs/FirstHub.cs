@@ -25,7 +25,7 @@ namespace SmartMeter.Hubs
             // validate the reading is a positive decimal
             if (double.IsNaN(newReading) || double.IsInfinity(newReading) || newReading < 0)
             {
-                await Clients.Caller.SendAsync("error", "Server-side validation failed: Invalid reading- Must be a positive decimal.");
+                await Clients.Caller.SendAsync("error", "Invalid reading- Must be a positive decimal.");
                 return;
             }
             

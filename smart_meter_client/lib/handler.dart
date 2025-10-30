@@ -5,9 +5,9 @@ import 'package:reactable/reactable.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 
 import 'package:logger/logger.dart';
-final logger = Logger();
 
 class ServerHandler {
+  final Logger logger;
   late HubConnection hubConn;
 
   // assign token for each client instance
@@ -16,7 +16,7 @@ class ServerHandler {
   // Reactable to hold the current bill value
   Reactable<double> billReactable = 0.0.asReactable;
 
-  ServerHandler() {
+  ServerHandler({required this.logger}) {
     setupConnection();
     registerInitialHandler(); // handlers must be registered before starting connection
   }
