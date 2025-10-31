@@ -1,13 +1,12 @@
-import 'package:logger/logger.dart';
 import 'package:smart_meter_client/handler.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Client API token tests', () {
     late ServerHandler serverHandler;
-    final logger = Logger();
+
     setUp(() {
-      serverHandler = ServerHandler(logger: logger);
+      serverHandler = ServerHandler();
     });
 
     // confirm clientAPIToken is correctly initialised to 'client-api-token'
@@ -15,11 +14,17 @@ void main() {
       expect(serverHandler.clientAPIToken, equals("client-api-token"));
     });
     
-    // check accessTokenFactory returns the correct token when called
-    // verifies token used for authentication matches token assigned to client instance
+    // check accessTokenFactory returns the correct token used by the client for authentication
+    // verify token used for authentication matches token assigned to client instance
     test('Verify accessTokenFactory returns correct token', () async {
-      final token = await serverHandler.httpConOptions.accessTokenFactory!();
-      expect(token, equals("client-api-token"));
+      final goodToken = await serverHandler.httpConOptions.accessTokenFactory!();
+      final isValidToken = serverHandler.validateToken(goodToken);
+      expect(isValidToken, isTrue);
+    });
+
+    test('Verify invalid token fails authentication', () async {
+      final isValidToken = serverHandler.validateToken("invalid-token");
+      expect(isValidToken, isFalse);
     });
 
   });

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:reactable/reactable.dart';
 import 'package:smart_meter_client/handler.dart';
+import 'package:logger/logger.dart';
+
+final Logger serverLogger = Logger();
 
 class SmartMeterAppPage extends StatefulWidget {
   const SmartMeterAppPage({super.key, required this.title});

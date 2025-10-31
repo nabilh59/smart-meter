@@ -17,13 +17,14 @@ class MockLogger extends Logger {
 
 void main() {
   group('Reading validation tests', () {
-    late ServerHandler serverHandler;
     late MockLogger mockLogger;
+    late ServerHandler serverHandler;
     late MockHubConnection mockConn;
 
     setUp(() {
       mockLogger = MockLogger();
-      serverHandler = ServerHandler(logger: mockLogger);
+      ServerHandler.logger = mockLogger;
+      serverHandler = ServerHandler();
       mockConn = MockHubConnection();
       serverHandler.hubConn = mockConn;
     });

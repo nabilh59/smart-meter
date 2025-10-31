@@ -18,8 +18,9 @@ class MockLogger extends Logger {
 void main() {
   test('Server error message is received by client and logged correctly', () {
     final mockLogger = MockLogger();
+    ServerHandler.logger = mockLogger;
     final mockConn = MockHubConnection();
-    final handler = ServerHandler(logger: mockLogger);
+    final handler = ServerHandler();
     handler.hubConn = mockConn;
 
     // mock the server sending an error message
