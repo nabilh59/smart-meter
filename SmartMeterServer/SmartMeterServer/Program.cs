@@ -1,4 +1,4 @@
-using SmartMeter.Hubs;
+using SmartMeterServer.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,8 +39,6 @@ app.MapControllers();
 // Existing hub
 app.MapHub<FirstHub>("/hubs/connect");
 
-// NEW: alerts hub
-app.MapHub<AlertsHub>("/hubs/alerts");
 
 app.Run();
 

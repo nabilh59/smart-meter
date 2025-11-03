@@ -1,34 +1,30 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using SmartMeter.Hubs;
-using SmartMeterServer.Models;
+using SmartMeterServer.Hubs;     // FirstHub
+using SmartMeterServer.Models;   
 
-namespace SmartMeter.Controllers
+namespace SmartMeterServer.Controllers
 {
     [ApiController]
     [Route("api/grid")]
     public class GridController : ControllerBase
     {
-        private readonly IHubContext<AlertsHub> _hub;
-        private static string _current = "UP"; // for status checks
+        private readonly IHubContext<FirstHub> _hub; 
 
-        public GridController(IHubContext<AlertsHub> hub) => _hub = hub;
+        public GridController(IHubContext<FirstHub> hub) => _hub = hub;
 
         [HttpGet("status")]
-        public IActionResult Status() => Ok(new { status = _current });
+        public IActionResult Status() => Ok(new { status = GridState.Current });
 
         [HttpPost("down")]
         public async Task<IActionResult> Down()
         {
-            _current = "DOWN";
+            GridState.Current = "DOWN";
             var msg = new GridStatusMessage(
-                Type: "grid.status",
-                SchemaVersion: "1.0",
-                Status: "DOWN",
-                ClientAction: "PAUSE_READINGS",
-                Title: "Temporary grid interruption",
-                Message: "We can’t receive readings right now due to a grid issue. No action is needed.",
-                RaisedAtUtc: DateTime.UtcNow
+                "grid.status", "1.0", "DOWN", "PAUSE_READINGS",
+                "Temporary grid interruption",
+                "We can’t receive readings right now due to a grid issue. No action is needed.",
+                DateTime.UtcNow
             );
             await _hub.Clients.All.SendAsync("gridStatus", msg);
             return Ok(new { ok = true });
@@ -37,15 +33,12 @@ namespace SmartMeter.Controllers
         [HttpPost("up")]
         public async Task<IActionResult> Up()
         {
-            _current = "UP";
+            GridState.Current = "UP";
             var msg = new GridStatusMessage(
-                Type: "grid.status",
-                SchemaVersion: "1.0",
-                Status: "UP",
-                ClientAction: "RESUME_READINGS",
-                Title: "Grid back to normal",
-                Message: "Readings will resume automatically.",
-                RaisedAtUtc: DateTime.UtcNow
+                "grid.status", "1.0", "UP", "RESUME_READINGS",
+                "Grid back to normal",
+                "Readings will resume automatically.",
+                DateTime.UtcNow
             );
             await _hub.Clients.All.SendAsync("gridStatus", msg);
             return Ok(new { ok = true });
