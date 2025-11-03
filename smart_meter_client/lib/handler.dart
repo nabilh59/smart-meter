@@ -6,13 +6,19 @@ import 'package:signalr_netcore/signalr_client.dart';
 
 import 'package:logger/logger.dart';
 
-enum TelemetryState { normal, paused }
+// Configure logger to only show errors (no info/warnings/debug)
+final logger = Logger(
+  level: Level.error, // only log errors
+  printer: PrettyPrinter(
+    methodCount: 0,
+    printEmojis: false,
+  ),
+);
 
-final logger = Logger();
+enum TelemetryState { normal, paused }
 
 class ServerHandler {
   late HubConnection hubConn;
-  late HubConnection alertsHubConn; // keep a field so it persists
 
   // assign token for each client instance
   final String clientAPIToken = "client-api-token";
@@ -40,19 +46,13 @@ class ServerHandler {
     );
 
     // handles connection to server and communication with it (/hubs/connect matches what is in the server code)
-    // changed http to https for TLS encryption
+    // changed http to https for TLS encryption (switch to http://localhost:5000 if using HTTP)
     hubConn = HubConnectionBuilder()
         .withUrl("https://localhost:5001/hubs/connect", options: httpConOptions)
-        .build();
-
-    // connect to alerts hub to listen for grid status changes (DOWN / UP)
-    alertsHubConn = HubConnectionBuilder()
-        .withUrl("https://localhost:5001/hubs/alerts", options: httpConOptions)
         .withAutomaticReconnect()
         .build();
 
-    // listen for grid status messages from the server
-    alertsHubConn.on("gridStatus", (args) {
+    hubConn.on("gridStatus", (args) {
       if (args == null || args.isEmpty) return;
       final msg = args.first as Map<dynamic, dynamic>;
       final status = (msg["status"] as String?) ?? "";
@@ -62,11 +62,9 @@ class ServerHandler {
       if (status == "DOWN") {
         state = TelemetryState.paused;
         showBanner?.call(title, body);
-        logger.w("Grid DOWN: pausing telemetry and dropping readings.");
       } else if (status == "UP") {
         state = TelemetryState.normal;
         hideBanner?.call();
-        logger.i("Grid UP: resuming telemetry.");
       }
     });
   }
@@ -84,18 +82,19 @@ class ServerHandler {
 
   sendReading(double reading) async {
     // if grid is down, drop the reading and do not send it to the server
-    if (state == TelemetryState.paused) {
-      logger.d("Telemetry paused: dropping reading $reading");
-      return;
-    }
+    if (state == TelemetryState.paused) return;
+
+    // skip if not connected
+    if (hubConn.state != HubConnectionState.Connected) return;
 
     // validate reading is a positive decimal
-    if (reading.isNaN || reading.isInfinite || reading < 0) {
-      logger.e("Client-side validation failed: Invalid reading- Must be a positive decimal.");
-      return;
-    }
+    if (reading.isNaN || reading.isInfinite || reading < 0) return;
 
-    await hubConn.send("CalculateNewBill", args: [billReactable.value, reading]);
+    try {
+      await hubConn.send("CalculateNewBill", args: [billReactable.value, reading]);
+    } catch (e) {
+      logger.e("Failed to send reading: $e");
+    }
   }
 
   setBill(List? result) {
@@ -104,7 +103,6 @@ class ServerHandler {
 
   registerInitialHandler() {
     hubConn.on("receiveInitialBill", setBill);
-
     hubConn.on("calculateBill", setBill);
 
     // listen for error messages from the server and log them
@@ -118,10 +116,7 @@ class ServerHandler {
   }
 
   initServerConnection() async {
-    // starts the connection to the server
+    // starts the connection to the server (single hub only)
     await hubConn.start();
-
-    // starts the alerts hub connection (await so DOWN/UP works immediately)
-    await alertsHubConn.start();
   }
 }
