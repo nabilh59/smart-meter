@@ -5,7 +5,15 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddSignalR();
-builder.Services.AddCors();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", p => p
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials()
+        .SetIsOriginAllowed(_ => true)); // dev-friendly; tighten later
+});
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
@@ -13,19 +21,26 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    //app.UseHsts();
+    app.UseHsts();
 }
 
-//app.UseHttpsRedirection();
+// app.UseHttpsRedirection();  // you had this commented out; ok for local dev
 app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseCors("AllowAll");
+
 app.UseAuthorization();
 
 app.MapRazorPages();
+app.MapControllers();
+
+// Existing hub
 app.MapHub<FirstHub>("/hubs/connect");
-app.UseCors("AllowAll");
+
+// NEW: alerts hub
+app.MapHub<AlertsHub>("/hubs/alerts");
 
 app.Run();
+

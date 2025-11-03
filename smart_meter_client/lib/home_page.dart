@@ -87,34 +87,101 @@ class _SmartMeterAppPageState extends State<SmartMeterAppPage> {
   }
 }
 
-class _SmartMeterHomePage extends StatelessWidget {
+class _SmartMeterHomePage extends StatefulWidget {
   final ServerHandler handler;
   final String title;
   const _SmartMeterHomePage({
-      super.key, 
-      required this.handler,
-      required this.title
-    });  
+    super.key,
+    required this.handler,
+    required this.title
+  });
+
+  @override
+  State<_SmartMeterHomePage> createState() => _SmartMeterHomePageState();
+}
+
+class _SmartMeterHomePageState extends State<_SmartMeterHomePage> {
+  String? _bannerTitle;
+  String? _bannerBody;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // show a calm, inline banner when grid is DOWN
+    widget.handler.showBanner = (title, body) {
+      setState(() {
+        _bannerTitle = title;
+        _bannerBody = body;
+      });
+    };
+
+    // hide the banner when grid is UP
+    widget.handler.hideBanner = () {
+      setState(() {
+        _bannerTitle = null;
+        _bannerBody = null;
+      });
+    };
+  }
+
+  @override
+  void dispose() {
+    widget.handler.showBanner = null;
+    widget.handler.hideBanner = null;
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(title),
+        title: Text(widget.title),
       ),
-      body: Center( 
-            child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('Total Bill:', style: TextStyle(fontSize: 20)),
-              const SizedBox(height: 20),
-              Scope( // using Reactable library - refreshes whatever is in Scope when the Reactable value (i.e. handler.billReactable) changes 
-                builder: (_) => Text("${handler.billReactable.value}", style: const TextStyle(fontSize: 20)),
+      body: Column(
+        children: [
+          if (_bannerTitle != null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50, // soft info color
+                border: Border(
+                  left: BorderSide(color: Colors.blue.shade300, width: 4),
                 ),
-            ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(_bannerTitle!, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  Text(_bannerBody!),
+                ],
+              ),
+            ),
+
+          // main content
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('Total Bill:', style: TextStyle(fontSize: 20)),
+                  const SizedBox(height: 20),
+                  Scope(
+                    builder: (_) => Text(
+                      "${widget.handler.billReactable.value}",
+                      style: const TextStyle(fontSize: 20),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          ),
-        );
+        ],
+      ),
+    );
   }
 }
