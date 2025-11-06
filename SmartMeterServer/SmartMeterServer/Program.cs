@@ -1,11 +1,21 @@
 using SmartMeter.Hubs;
+using System.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+builder.Services.AddSingleton<SmartMeter.Hubs.IInMemoryDatabase, SmartMeter.Hubs.InMemoryDatabase>();
 builder.Services.AddSignalR();
-builder.Services.AddCors();
+
+// configure a named CORS policy used later
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
 
 var app = builder.Build();
 
@@ -17,15 +27,38 @@ if (!app.Environment.IsDevelopment())
     //app.UseHsts();
 }
 
-//app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+// apply CORS before endpoints that need it
+app.UseCors("AllowAll");
 
 app.UseAuthorization();
 
 app.MapRazorPages();
 app.MapHub<FirstHub>("/hubs/connect");
-app.UseCors("AllowAll");
+
+// debug: return all readings as JSON (clientId -> info)
+app.MapGet("/debug/readings", (SmartMeter.Hubs.IInMemoryDatabase db) =>
+{
+    var initial = db.InitialBill;
+    var snapshot = db.Readings.ToDictionary(
+        kv => kv.Key,
+        kv =>
+        {
+            var readings = kv.Value.ToArray();
+            var sumReadings = readings.Sum();
+            var total = initial + sumReadings;
+            return new
+            {
+                initialBill = initial,
+                readings = readings,
+                sumReadings = sumReadings,
+                totalBill = total
+            };
+        });
+    return Results.Json(snapshot);
+});
 
 app.Run();
