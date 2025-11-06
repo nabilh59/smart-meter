@@ -108,15 +108,15 @@ class _SmartMeterHomePageState extends State<_SmartMeterHomePage> {
   void initState() {
     super.initState();
 
-    // show a calm, inline banner when grid is DOWN
+    // show a banner when grid is down
     widget.handler.showBanner = (title, body) {
       setState(() {
         _bannerTitle = title;
         _bannerBody = body;
-      });
+      }); 
     };
 
-    // hide the banner when grid is UP
+    // hide the banner when grid is up
     widget.handler.hideBanner = () {
       setState(() {
         _bannerTitle = null;

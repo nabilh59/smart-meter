@@ -86,8 +86,6 @@ class ServerHandler {
 
     // skip if not connected
     if (hubConn.state != HubConnectionState.Connected) return;
-
-    // validate reading is a positive decimal
     if (reading.isNaN || reading.isInfinite || reading < 0) return;
 
     try {
