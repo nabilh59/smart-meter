@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using SmartMeterServer.Hubs;     // FirstHub
+using SmartMeterServer.Hubs;
 using SmartMeterServer.Models;   
 
 namespace SmartMeterServer.Controllers
@@ -12,9 +12,6 @@ namespace SmartMeterServer.Controllers
         private readonly IHubContext<FirstHub> _hub; 
 
         public GridController(IHubContext<FirstHub> hub) => _hub = hub;
-
-        [HttpGet("status")]
-        public IActionResult Status() => Ok(new { status = GridState.Current });
 
         [HttpPost("down")]
         public async Task<IActionResult> Down()

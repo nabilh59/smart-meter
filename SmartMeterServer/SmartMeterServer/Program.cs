@@ -26,13 +26,9 @@ if (!app.Environment.IsDevelopment())
 
 // app.UseHttpsRedirection();  // you had this commented out; ok for local dev
 app.UseStaticFiles();
-
 app.UseRouting();
-
 app.UseCors("AllowAll");
-
 app.UseAuthorization();
-
 app.MapRazorPages();
 app.MapControllers();
 

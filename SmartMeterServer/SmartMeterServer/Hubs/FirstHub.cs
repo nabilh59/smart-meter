@@ -18,7 +18,6 @@ namespace SmartMeterServer.Hubs
             string clientID = Context.ConnectionId;
             readings.TryAdd(clientID, new List<double>());
 
-
             var status = GridState.Current;
 
             var msg = status == "DOWN"
