@@ -1,57 +1,56 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SmartMeter.Hubs
 {
     public class FirstHub : Hub
     {
+        // server-side initial bill (authoritative)
         public static double InitialBill { get; set; } = 50.00;
 
-        // create dictionary to store readings from each client
-        private static ConcurrentDictionary<string, List<double>> readings = new();
+        // server-side dictionary store (connectionId -> queue of readings)
+        public static ConcurrentDictionary<string, ConcurrentQueue<double>> Readings { get; } = new();
 
-        private readonly IInMemoryDatabase _db;
-
-        public FirstHub(IInMemoryDatabase db)
+        public FirstHub()
         {
-            _db = db;
         }
 
-        //runs as soon as a connection is detected
+        // runs as soon as a connection is detected
         public override async Task OnConnectedAsync()
         {
-            // use connection ID to uniquely identify client, and initialise client's reading queue
             string clientID = Context.ConnectionId;
-            _db.TryAddClient(clientID);
+            Readings.TryAdd(clientID, new ConcurrentQueue<double>());
 
-            await Clients.Caller.SendAsync("receiveInitialBill", _db.InitialBill);
+            await Clients.Caller.SendAsync("receiveInitialBill", InitialBill);
             await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(System.Exception? exception)
         {
-            // optional: cleanup when client disconnects
             string clientID = Context.ConnectionId;
-            _db.RemoveClient(clientID);
+            Readings.TryRemove(clientID, out _);
             await base.OnDisconnectedAsync(exception);
         }
 
         public async Task CalculateNewBill(double currentTotalBill, double newReading)
         {
-            // validate the reading is a positive decimal
             if (double.IsNaN(newReading) || double.IsInfinity(newReading) || newReading < 0)
             {
                 await Clients.Caller.SendAsync("error", "Invalid reading- Must be a positive decimal.");
                 return;
             }
 
-            // store reading in the in-memory "database"
             string clientID = Context.ConnectionId;
-            _db.AddReading(clientID, newReading);
+            var q = Readings.GetOrAdd(clientID, _ => new ConcurrentQueue<double>());
+            q.Enqueue(newReading);
 
-            double newBill = currentTotalBill + newReading;
-            await Clients.Caller.SendAsync("calculateBill", newBill);
+            var readings = q.ToArray();
+            var sumReadings = readings.Sum();
+            var totalBill = InitialBill + sumReadings;
+
+            await Clients.Caller.SendAsync("calculateBill", totalBill);
         }
     }
 }
