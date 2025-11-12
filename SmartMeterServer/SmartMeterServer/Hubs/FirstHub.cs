@@ -14,20 +14,23 @@ namespace SmartMeter.Hubs
             _store = store;
         }
 
-        // runs as soon as a connection is detected
         public override async Task OnConnectedAsync()
         {
             string clientID = Context.ConnectionId;
 
-            // initialise Meter and register in singleton store
-            var meter = new Meter { ID = clientID };
-            _store.AddMeter(meter);
+            // consistent creation (use returned meter if you need to set metadata)
+            var meter = _store.GetOrCreateMeter(clientID);
+
+            // optionally set metadata only when newly created
+            if (meter.ReadingCount == 0)
+            {
+                // e.g. meter.SomeMeta = "...";
+            }
 
             var culture = CultureInfo.GetCultureInfo("en-GB");
             double initialNumeric = _store.InitialBill;
             string initialFormatted = initialNumeric.ToString("C2", culture);
 
-            // send numeric + formatted initial bill
             await Clients.Caller.SendAsync("receiveInitialBill", initialNumeric, initialFormatted);
             await base.OnConnectedAsync();
         }
@@ -43,25 +46,23 @@ namespace SmartMeter.Hubs
         {
             if (double.IsNaN(newReading) || double.IsInfinity(newReading) || newReading < 0)
             {
-                await Clients.Caller.SendAsync("error", "Invalid reading- Must be a positive decimal.");
+                await Clients.Caller.SendAsync("error", "Invalid reading - must be a positive decimal.");
                 return;
             }
 
             string clientID = Context.ConnectionId;
 
-            // store reading with server-generated timestamp (rounded inside Meter.AddReading)
+            // use store factory consistently
             var meter = _store.GetOrCreateMeter(clientID);
-            long timestamp = meter.AddReading(newReading);
 
-            var sum = meter.SumReadings();
-            var totalBill = _store.InitialBill + sum;
+            // add reading; AddReading returns (timestamp, storedRoundedValue)
+            var (timestamp, storedValue) = meter.AddReading(newReading);
 
-            var culture = CultureInfo.GetCultureInfo("en-GB");
-            string formattedTotal = totalBill.ToString("C2", culture);     // "£50.00"
-            string formattedReading = Math.Round(newReading, 2).ToString("F2", culture); // "xx.yy"
+            // calculation required: client-sent currentTotalBill + this single new reading
+            double newTotal = currentTotalBill + storedValue;
 
-            // send numeric total, formatted total, numeric reading, formatted reading, and the server timestamp
-            await Clients.Caller.SendAsync("calculateBill", totalBill, formattedTotal, Math.Round(newReading, 2), formattedReading, timestamp);
+            // send numeric total only (client formats with "£")
+            await Clients.Caller.SendAsync("calculateBill", newTotal);
         }
     }
 }
