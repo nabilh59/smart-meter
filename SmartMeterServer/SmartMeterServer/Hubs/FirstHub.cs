@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using System.Collections.Concurrent;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -7,30 +7,35 @@ namespace SmartMeter.Hubs
 {
     public class FirstHub : Hub
     {
-        // server-side initial bill (authoritative)
-        public static double InitialBill { get; set; } = 50.00;
+        private readonly IMeterStore _store;
 
-        // server-side dictionary store (connectionId -> queue of readings)
-        public static ConcurrentDictionary<string, ConcurrentQueue<double>> Readings { get; } = new();
-
-        public FirstHub()
+        public FirstHub(IMeterStore store)
         {
+            _store = store;
         }
 
         // runs as soon as a connection is detected
         public override async Task OnConnectedAsync()
         {
             string clientID = Context.ConnectionId;
-            Readings.TryAdd(clientID, new ConcurrentQueue<double>());
 
-            await Clients.Caller.SendAsync("receiveInitialBill", InitialBill);
+            // initialise Meter and register in singleton store
+            var meter = new Meter { ID = clientID };
+            _store.AddMeter(meter);
+
+            var culture = CultureInfo.GetCultureInfo("en-GB");
+            double initialNumeric = _store.InitialBill;
+            string initialFormatted = initialNumeric.ToString("C2", culture);
+
+            // send numeric + formatted initial bill
+            await Clients.Caller.SendAsync("receiveInitialBill", initialNumeric, initialFormatted);
             await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(System.Exception? exception)
         {
             string clientID = Context.ConnectionId;
-            Readings.TryRemove(clientID, out _);
+            _store.RemoveMeter(clientID, out _);
             await base.OnDisconnectedAsync(exception);
         }
 
@@ -43,14 +48,20 @@ namespace SmartMeter.Hubs
             }
 
             string clientID = Context.ConnectionId;
-            var q = Readings.GetOrAdd(clientID, _ => new ConcurrentQueue<double>());
-            q.Enqueue(newReading);
 
-            var readings = q.ToArray();
-            var sumReadings = readings.Sum();
-            var totalBill = InitialBill + sumReadings;
+            // store reading with server-generated timestamp (rounded inside Meter.AddReading)
+            var meter = _store.GetOrCreateMeter(clientID);
+            long timestamp = meter.AddReading(newReading);
 
-            await Clients.Caller.SendAsync("calculateBill", totalBill);
+            var sum = meter.SumReadings();
+            var totalBill = _store.InitialBill + sum;
+
+            var culture = CultureInfo.GetCultureInfo("en-GB");
+            string formattedTotal = totalBill.ToString("C2", culture);     // "£50.00"
+            string formattedReading = Math.Round(newReading, 2).ToString("F2", culture); // "xx.yy"
+
+            // send numeric total, formatted total, numeric reading, formatted reading, and the server timestamp
+            await Clients.Caller.SendAsync("calculateBill", totalBill, formattedTotal, Math.Round(newReading, 2), formattedReading, timestamp);
         }
     }
 }
