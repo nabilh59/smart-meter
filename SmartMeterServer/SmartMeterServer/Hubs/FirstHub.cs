@@ -44,9 +44,16 @@ namespace SmartMeter.Hubs
 
         public async Task CalculateNewBill(double currentTotalBill, double newReading)
         {
+            // validate new reading
             if (double.IsNaN(newReading) || double.IsInfinity(newReading) || newReading < 0)
             {
                 await Clients.Caller.SendAsync("error", "Invalid reading - must be a positive decimal.");
+                return;
+            }
+
+            // check if connection is still active and if not then don't proceed
+            if (Context.ConnectionAborted.IsCancellationRequested)
+            {
                 return;
             }
 
