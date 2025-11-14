@@ -51,12 +51,6 @@ namespace SmartMeter.Hubs
                 return;
             }
 
-            // check if connection is still active and if not then don't proceed
-            if (Context.ConnectionAborted.IsCancellationRequested)
-            {
-                return;
-            }
-
             string clientID = Context.ConnectionId;
 
             // use store factory consistently
