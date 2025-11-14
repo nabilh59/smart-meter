@@ -18,17 +18,26 @@ namespace SmartMeter.Hubs
     public class MeterStore : IMeterStore
     {
         public ConcurrentDictionary<string, Meter> ByConnectionId { get; } = new();
+        private readonly object _lock = new();
 
         public double InitialBill { get; set; } = 50.00;
 
         public bool AddMeter(Meter meter)
         {
-            return ByConnectionId.TryAdd(meter.ID, meter);
+            lock (_lock)
+            {
+                if (ByConnectionId.ContainsKey(meter.ID)) return false;
+                ByConnectionId[meter.ID] = meter;
+                return true;
+            }
         }
 
         public bool RemoveMeter(string connectionId, out Meter? meter)
         {
-            return ByConnectionId.TryRemove(connectionId, out meter);
+            lock (_lock)
+            {
+                return ByConnectionId.TryRemove(connectionId, out meter);
+            }
         }
 
         public Meter GetOrCreateMeter(string connectionId) =>

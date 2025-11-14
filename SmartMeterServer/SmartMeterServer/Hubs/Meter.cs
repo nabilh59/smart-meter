@@ -15,13 +15,12 @@ namespace SmartMeter.Hubs
         public ConcurrentDictionary<long, double> Readings { get; } = new();
 
         // Add a reading and return the timestamp used (Unix ms)
-        public (long Timestamp, double Value) AddReading(double reading)
+        public double AddReading(double reading)
         {
             var ts = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            // store rounded reading (2 dp)
             var rounded = Math.Round(reading, 2);
             Readings.TryAdd(ts, rounded);
-            return (ts, rounded);
+            return rounded; // return only the stored value
         }
 
         public double SumReadings() =>

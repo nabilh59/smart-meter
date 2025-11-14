@@ -36,6 +36,8 @@ app.MapGet("/debug/readings", (IMeterStore store) =>
 {
     var culture = CultureInfo.GetCultureInfo("en-GB");
     var initial = store.InitialBill;
+    const double pricePerKwh = 0.15; // match FirstHub constant
+
     var snapshot = store.GetAll().ToDictionary(
         kv => kv.Key,
         kv =>
@@ -58,15 +60,18 @@ app.MapGet("/debug/readings", (IMeterStore store) =>
                          .ToArray();
 
             var sumReadings = meter.SumReadings();
-            var total = initial + sumReadings;
+            var totalCost = sumReadings * pricePerKwh;
+            var total = initial + totalCost;
+
             return new
             {
                 connectionId = meter.ID,
                 readingCount = meter.ReadingCount,
                 readings = readings, // array of { timestamp, date, time, value }
                 sumReadings = sumReadings,
-                sumReadingsFormatted = sumReadings.ToString("C2", culture),
-                totalBill = "£" + total,
+                totalCost = totalCost,
+                totalCostFormatted = totalCost.ToString("C2", culture),
+                totalBill = total,
                 totalBillFormatted = total.ToString("C2", culture),
                 initialBillFormatted = initial.ToString("C2", culture)
             };

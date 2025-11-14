@@ -9,6 +9,9 @@ namespace SmartMeter.Hubs
     {
         private readonly IMeterStore _store;
 
+        // set your electricity price per kWh here
+        private const double PricePerKwh = 0.15;
+
         public FirstHub(IMeterStore store)
         {
             _store = store;
@@ -18,14 +21,8 @@ namespace SmartMeter.Hubs
         {
             string clientID = Context.ConnectionId;
 
-            // consistent creation (use returned meter if you need to set metadata)
+            // consistent creation
             var meter = _store.GetOrCreateMeter(clientID);
-
-            // optionally set metadata only when newly created
-            if (meter.ReadingCount == 0)
-            {
-                // e.g. meter.SomeMeta = "...";
-            }
 
             var culture = CultureInfo.GetCultureInfo("en-GB");
             double initialNumeric = _store.InitialBill;
@@ -51,17 +48,18 @@ namespace SmartMeter.Hubs
             }
 
             string clientID = Context.ConnectionId;
-
-            // use store factory consistently
             var meter = _store.GetOrCreateMeter(clientID);
 
-            // add reading; AddReading returns (timestamp, storedRoundedValue)
-            var (timestamp, storedValue) = meter.AddReading(newReading);
+            // store the reading (for history/debug)
+            double storedValue = meter.AddReading(newReading);
 
-            // calculation required: client-sent currentTotalBill + this single new reading
-            double newTotal = currentTotalBill + storedValue;
+            // compute cost of this single reading
+            double cost = storedValue * PricePerKwh;
 
-            // send numeric total only (client formats with "£")
+            // incremental: add cost to client-supplied total
+            double newTotal = currentTotalBill + cost;
+            newTotal = System.Math.Round(newTotal, 2);
+
             await Clients.Caller.SendAsync("calculateBill", newTotal);
         }
     }
