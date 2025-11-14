@@ -29,7 +29,7 @@ void main() {
       serverHandler.hubConn = mockConn;
     });
 
-    test('Valid reading is sent to server', () async {
+    test('Verify valid reading is sent to server', () async {
       when(mockConn.send(any, args: anyNamed('args'))).thenAnswer((_) async => null);      
       await serverHandler.sendReading(22.5);
 
