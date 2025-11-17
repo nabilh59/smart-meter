@@ -6,44 +6,63 @@ namespace SmartMeter.Hubs
 {
     public interface IMeterStore
     {
-        ConcurrentDictionary<string, Meter> ByConnectionId { get; }
-        double InitialBill { get; set; }
+        // stores a mock representation of a meter, indexed by connection ID
+        ConcurrentDictionary<string, Meter> Meters { get; set; }
 
-        bool AddMeter(Meter meter);
-        bool RemoveMeter(string connectionId, out Meter? meter);
+        double PricePerKwh { get; }
+
+        string initialBill { get; }
+
+        void RemoveMeter(string connectionId);
         Meter GetOrCreateMeter(string connectionId);
         IReadOnlyCollection<KeyValuePair<string, Meter>> GetAll();
     }
 
     public class MeterStore : IMeterStore
-    {
-        public ConcurrentDictionary<string, Meter> ByConnectionId { get; } = new();
-        private readonly object _lock = new();
+    {        
+        public ConcurrentDictionary<string, Meter> Meters { get; set; } = new();
 
-        public double InitialBill { get; set; } = 50.00;
+        public double PricePerKwh { get; } = 0.15;
 
-        public bool AddMeter(Meter meter)
+        public string initialBill { get; } = "0.00";
+
+        private static readonly object _lock = new();
+
+        private static MeterStore _instance;
+
+        public static MeterStore getInstance()
         {
-            lock (_lock)
+            // thread safe implementation of singleton,
+            // using lock so that checks for existence of MeterStore only happen one after the other
+            if (_instance == null)
             {
-                if (ByConnectionId.ContainsKey(meter.ID)) return false;
-                ByConnectionId[meter.ID] = meter;
-                return true;
+                lock (_lock)
+                {
+                    if (_instance == null)
+                    {
+                        _instance = new MeterStore();
+                    }
+                }
             }
+            return _instance;
         }
 
-        public bool RemoveMeter(string connectionId, out Meter? meter)
+        public void RemoveMeter(string connectionId)
         {
-            lock (_lock)
-            {
-                return ByConnectionId.TryRemove(connectionId, out meter);
-            }
+            // not using the value returned by Remove so using _
+            Meters.Remove(connectionId, out _);        
         }
 
-        public Meter GetOrCreateMeter(string connectionId) =>
-            ByConnectionId.GetOrAdd(connectionId, id => new Meter { ID = id });
+        public Meter GetOrCreateMeter(string connectionId)
+        {
+            Meter meter = Meters.GetOrAdd(connectionId, id => new Meter(connectionId));
+            return meter;
+        }           
 
-        public IReadOnlyCollection<KeyValuePair<string, Meter>> GetAll() =>
-            ByConnectionId.ToList().AsReadOnly();
+        public IReadOnlyCollection<KeyValuePair<string, Meter>> GetAll()
+        {
+            return Meters.ToList().AsReadOnly();
+        }
+            
     }
 }

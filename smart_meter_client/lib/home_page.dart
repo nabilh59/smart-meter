@@ -113,7 +113,7 @@ class _SmartMeterHomePage extends StatelessWidget {
               const Text('Total Bill:', style: TextStyle(fontSize: 20)),
               const SizedBox(height: 20),
               Scope( // using Reactable library - refreshes whatever is in Scope when the Reactable value (i.e. handler.billReactable) changes 
-                builder: (_) => Text("${handler.billReactable.value}", style: const TextStyle(fontSize: 20)),
+                builder: (_) => Text("£${handler.billReactable.value}", style: const TextStyle(fontSize: 20)),
                 ),
             ],
           ),

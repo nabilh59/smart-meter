@@ -15,7 +15,7 @@ class ServerHandler {
   final String clientAPIToken = "client-api-token";
 
   // Reactable to hold the current bill value
-  Reactable<double> billReactable = 0.0.asReactable;
+  Reactable<String> billReactable = Reactable("");
 
   ServerHandler() {
     setupConnection();
@@ -63,7 +63,7 @@ class ServerHandler {
   }  
 
   setBill(List? result){
-    billReactable.value = result?[0].toDouble();
+    billReactable.value = result?[0];
     logger.i("Updated bill: ${billReactable.value}");
   }
 

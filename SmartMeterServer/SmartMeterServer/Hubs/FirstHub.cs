@@ -9,8 +9,8 @@ namespace SmartMeter.Hubs
     {
         private readonly IMeterStore _store;
 
-        // set your electricity price per kWh here
-        private const double PricePerKwh = 0.15;
+        // electricity price per kWh here
+        
 
         public FirstHub(IMeterStore store)
         {
@@ -21,25 +21,20 @@ namespace SmartMeter.Hubs
         {
             string clientID = Context.ConnectionId;
 
-            // consistent creation
             var meter = _store.GetOrCreateMeter(clientID);
 
-            var culture = CultureInfo.GetCultureInfo("en-GB");
-            double initialNumeric = _store.InitialBill;
-            string initialFormatted = initialNumeric.ToString("C2", culture);
-
-            await Clients.Caller.SendAsync("receiveInitialBill", initialNumeric, initialFormatted);
+            await Clients.Caller.SendAsync("receiveInitialBill", _store.initialBill);
             await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(System.Exception? exception)
         {
             string clientID = Context.ConnectionId;
-            _store.RemoveMeter(clientID, out _);
+            _store.RemoveMeter(clientID);
             await base.OnDisconnectedAsync(exception);
         }
 
-        public async Task CalculateNewBill(double currentTotalBill, double newReading)
+        public async Task CalculateNewBill(string currentTotalBill, double newReading)
         {
             // validate new reading
             if (double.IsNaN(newReading) || double.IsInfinity(newReading) || newReading < 0)
@@ -52,16 +47,18 @@ namespace SmartMeter.Hubs
             var meter = _store.GetOrCreateMeter(clientID);
 
             // store the reading (for history/debug)
-            double storedValue = meter.AddReading(newReading);
+            meter.AddReading(newReading);
 
             // compute cost of this single reading
-            double cost = storedValue * PricePerKwh;
+            double cost = newReading * _store.PricePerKwh;
 
-            // incremental: add cost to client-supplied total
-            double newTotal = currentTotalBill + cost;
+            // add cost to client-supplied total
+            double newTotal = Convert.ToDouble(currentTotalBill) + cost;
             newTotal = System.Math.Round(newTotal, 2);
 
-            await Clients.Caller.SendAsync("calculateBill", newTotal);
+            // format before sending back to client
+            string formattedNewTotal = newTotal.ToString("0.00");
+            await Clients.Caller.SendAsync("calculateBill", formattedNewTotal);
         }
     }
 }

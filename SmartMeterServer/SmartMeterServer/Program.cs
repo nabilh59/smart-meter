@@ -35,10 +35,11 @@ app.MapHub<FirstHub>("/hubs/connect");
 app.MapGet("/debug/readings", (IMeterStore store) =>
 {
     var culture = CultureInfo.GetCultureInfo("en-GB");
-    var initial = store.InitialBill;
-    const double pricePerKwh = 0.15; // match FirstHub constant
+    var initial = store.initialBill;
+    double pricePerKwh = store.PricePerKwh;
 
-    var snapshot = store.GetAll().ToDictionary(
+
+	var snapshot = store.GetAll().ToDictionary(
         kv => kv.Key,
         kv =>
         {
@@ -70,10 +71,10 @@ app.MapGet("/debug/readings", (IMeterStore store) =>
                 readings = readings, // array of { timestamp, date, time, value }
                 sumReadings = sumReadings,
                 totalCost = totalCost,
-                totalCostFormatted = totalCost.ToString("C2", culture),
+                totalCostFormatted = totalCost.ToString(culture),
                 totalBill = total,
-                totalBillFormatted = total.ToString("C2", culture),
-                initialBillFormatted = initial.ToString("C2", culture)
+                totalBillFormatted = total.ToString(culture),
+                initialBillFormatted = initial.ToString(culture)
             };
         });
     return Results.Json(snapshot);
