@@ -6,6 +6,17 @@ import 'package:signalr_netcore/signalr_client.dart';
 
 import 'package:logger/logger.dart';
 
+// Configure logger to only show errors (no info/warnings/debug)
+final logger = Logger(
+  level: Level.error, // only log errors
+  printer: PrettyPrinter(
+    methodCount: 0,
+    printEmojis: false,
+  ),
+);
+
+enum TelemetryState { normal, paused }
+
 class ServerHandler {
   static Logger logger = Logger();
   late HubConnection hubConn;
@@ -16,6 +27,13 @@ class ServerHandler {
 
   // Reactable to hold the current bill value
   Reactable<String> billReactable = Reactable("");
+
+  // state to track whether readings should be paused or active
+  TelemetryState state = TelemetryState.normal;
+
+  // optional UI callbacks (used by the home_page widget)
+  void Function(String title, String body)? showBanner;
+  void Function()? hideBanner;
 
   ServerHandler() {
     setupConnection();
@@ -32,11 +50,27 @@ class ServerHandler {
     );
 
     // handles connection to server and communication with it (/hubs/connect matches what is in the server code)
-    // changed http to https for TLS encryption
+    // changed http to https for TLS encryption (switch to http://localhost:5000 if using HTTP)
     hubConn = HubConnectionBuilder()
-    .withUrl("https://localhost:5001/hubs/connect", options: _httpConOpts)
-    .build();
-    logger.i("Server connection setup complete.");
+        .withUrl("https://localhost:5001/hubs/connect", options: httpConOptions)
+        .withAutomaticReconnect()
+        .build();
+
+    hubConn.on("gridStatus", (args) {
+      if (args == null || args.isEmpty) return;
+      final msg = args.first as Map<dynamic, dynamic>;
+      final status = (msg["status"] as String?) ?? "";
+      final title = (msg["title"] as String?) ?? "Status update";
+      final body = (msg["message"] as String?) ?? "";
+
+      if (status == "DOWN") {
+        state = TelemetryState.paused;
+        showBanner?.call(title, body);
+      } else if (status == "UP") {
+        state = TelemetryState.normal;
+        hideBanner?.call();
+      }
+    });
   }
 
   HttpConnectionOptions get httpConOptions => _httpConOpts;
@@ -53,28 +87,34 @@ class ServerHandler {
   }
 
   sendReading(double reading) async {
-    // validate reading is a positive decimal
+    // if grid is down, drop the reading and do not send it to the server
+    if (state == TelemetryState.paused) return;
+
+    // skip if not connected
+    if (hubConn.state != HubConnectionState.Connected) return;
     if (reading.isNaN || reading.isInfinite || reading < 0) {
       logger.e("Client-side validation failed: Invalid reading- Must be a positive decimal.");
       return;
     }
-    logger.i("Sending new reading to server: $reading with current bill: ${billReactable.value}");
-    await hubConn.send("CalculateNewBill", args:[billReactable.value, reading]);   
-  }  
 
-  setBill(List? result){
-    billReactable.value = result?[0];
-    logger.i("Updated bill: ${billReactable.value}");
+    try {
+      await hubConn.send("CalculateNewBill", args: [billReactable.value, reading]);
+    } catch (e) {
+      logger.e("Failed to send reading: $e");
+    }
   }
 
-  registerInitialHandler(){    
-    hubConn.on("receiveInitialBill", setBill);
+  setBill(List? result) {
+    billReactable.value = result?[0];
+  }
 
+  registerInitialHandler() {
+    hubConn.on("receiveInitialBill", setBill);
     hubConn.on("calculateBill", setBill);
 
     // listen for error messages from the server and log them
     hubConn.on("error", (args) {
-      if (args !=null && args.isNotEmpty) {
+      if (args != null && args.isNotEmpty) {
         logger.e("Server error: ${args[0]}");
       } else {
         logger.e("Unknown server error");
@@ -82,16 +122,8 @@ class ServerHandler {
     });
   }
 
-  // validate client's token for authentication
-  bool validateToken(String token) {
-    return token == clientAPIToken;
-  }
-
-  initServerConnection() async
-  {
-    logger.i("Starting connection to server...");
-    // starts the connection to the server
+  initServerConnection() async {
+    // starts the connection to the server (single hub only)
     await hubConn.start();
-    logger.i("Connection to server successfully established!");
-  } 
+  }
 }

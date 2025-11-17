@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using System.Collections.Concurrent;
+using SmartMeterServer.Models; 
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SmartMeter.Hubs
+namespace SmartMeterServer.Hubs
 {
     public class FirstHub : Hub
     {
@@ -17,13 +19,33 @@ namespace SmartMeter.Hubs
             _store = store;
         }
 
+        // runs as soon as a connection is detected
         public override async Task OnConnectedAsync()
         {
             string clientID = Context.ConnectionId;
 
             var meter = _store.GetOrCreateMeter(clientID);
 
+            var status = GridState.Current;
+
+            var msg = status == "DOWN"
+                ? new GridStatusMessage(
+                    "grid.status", "1.0", "DOWN", "PAUSE_READINGS",
+                    "Temporary grid interruption",
+                    "We can’t receive readings right now due to a grid issue. No action is needed.",
+                    DateTime.UtcNow
+                  )
+                : new GridStatusMessage(
+                    "grid.status", "1.0", "UP", "RESUME_READINGS",
+                    "Grid back to normal",
+                    "Readings will resume automatically.",
+                    DateTime.UtcNow
+                  );
+
+            await Clients.Caller.SendAsync("gridStatus", msg);
+
             await Clients.Caller.SendAsync("receiveInitialBill", _store.initialBill);
+
             await base.OnConnectedAsync();
         }
 

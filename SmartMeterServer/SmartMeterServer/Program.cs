@@ -14,16 +14,22 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll", policy =>
         policy.AllowAnyOrigin()
               .AllowAnyHeader()
-              .AllowAnyMethod());
+              .AllowAnyMethod()
+              .AllowCredentials()
+              .SetIsOriginAllowed(_ => true)); // dev-friendly; tighten later
 });
+
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
+    app.UseHsts();
 }
 
+// app.UseHttpsRedirection();  // you had this commented out; ok for local dev
 app.UseStaticFiles();
 app.UseRouting();
 app.UseCors("AllowAll");
@@ -80,4 +86,7 @@ app.MapGet("/debug/readings", (IMeterStore store) =>
     return Results.Json(snapshot);
 });
 
+app.MapControllers();
+
 app.Run();
+
