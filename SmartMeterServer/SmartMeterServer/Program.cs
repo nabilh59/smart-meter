@@ -2,11 +2,11 @@ using SmartMeterServer.Hubs;
 using SmartMeterServer.Models;
 using System.Globalization;
 using System.Linq;
+using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddRazorPages();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IMeterStore, MeterStore>();
 
@@ -19,22 +19,28 @@ builder.Services.AddCors(options =>
               .SetIsOriginAllowed(_ => true)); // dev-friendly; tighten later
 });
 
+builder.Services.AddHttpsRedirection(options =>
+{
+    options.RedirectStatusCode = (int)HttpStatusCode.PermanentRedirect;
+    options.HttpsPort = 443;
+});
+
 builder.Services.AddControllers();
 
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error");
-    app.UseHsts();
+    app.UseExceptionHandler("/Error"); 
 }
 
-// app.UseHttpsRedirection();  // you had this commented out; ok for local dev
+app.UseHttpsRedirection();
+app.UseHsts();
+
 app.UseStaticFiles();
 app.UseRouting();
 app.UseCors("AllowSpecificOrigin");
 app.UseAuthorization();
-app.MapRazorPages();
 app.MapHub<FirstHub>("/hubs/connect");
 
 // debug: return all meters as JSON via the injected store (meters with timestamp->reading)
