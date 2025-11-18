@@ -10,7 +10,7 @@ enum TelemetryState { normal, paused }
 
 class ServerHandler {
   static Logger logger = Logger(
-    level: Level.all, // only log errors
+    level: Level.all, // change as needed to control log output
     printer: PrettyPrinter(
       methodCount: 0,
       printEmojis: false,
