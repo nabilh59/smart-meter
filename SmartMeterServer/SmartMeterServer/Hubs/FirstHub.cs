@@ -44,7 +44,8 @@ namespace SmartMeterServer.Hubs
 
             await Clients.Caller.SendAsync("gridStatus", msg);
 
-            await Clients.Caller.SendAsync("receiveInitialBill", _store.initialBill);
+            string billTimestamp = DateTime.Now.ToString("H:mm ddd, dd MMM yyyy");
+            await Clients.Caller.SendAsync("receiveInitialBill", _store.initialBill, billTimestamp);
 
             await base.OnConnectedAsync();
         }
@@ -56,7 +57,7 @@ namespace SmartMeterServer.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
-        public async Task CalculateNewBill(string currentTotalBill, double newReading)
+        public async Task CalculateNewBill(string currentTotalBill, double newReading, long readingTimestamp)
         {
             // validate new reading
             if (double.IsNaN(newReading) || double.IsInfinity(newReading) || newReading < 0)
@@ -69,7 +70,7 @@ namespace SmartMeterServer.Hubs
             var meter = _store.GetOrCreateMeter(clientID);
 
             // store the reading (for history/debug)
-            meter.AddReading(newReading);
+            meter.AddReading(newReading, readingTimestamp);
 
             // compute cost of this single reading
             double cost = newReading * _store.PricePerKwh;
@@ -78,9 +79,11 @@ namespace SmartMeterServer.Hubs
             double newTotal = Convert.ToDouble(currentTotalBill) + cost;
             newTotal = System.Math.Round(newTotal, 2);
 
-            // format before sending back to client
+            // format before sending back to client with timestamp
             string formattedNewTotal = newTotal.ToString("0.00");
-            await Clients.Caller.SendAsync("calculateBill", formattedNewTotal);
+            string billTimestamp = DateTime.Now.ToString("H:mm ddd, dd MMM yyyy");
+            
+            await Clients.Caller.SendAsync("calculateBill", formattedNewTotal, billTimestamp);
         }
     }
 }

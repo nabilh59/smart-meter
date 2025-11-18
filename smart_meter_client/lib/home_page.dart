@@ -179,6 +179,13 @@ class _SmartMeterHomePageState extends State<_SmartMeterHomePage> {
                       style: const TextStyle(fontSize: 20),
                     ),
                   ),
+                  const SizedBox(height: 40),
+                  Scope(
+                    builder: (_) => Text(
+                      "Your bill was last updated at ${widget.handler.billDateReactable.value}",
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ),
                 ],
               ),
             ),

@@ -19,10 +19,9 @@ namespace SmartMeterServer.Models
         }
 
         // Add a reading and return the timestamp used (Unix ms)
-        public void AddReading(double reading)
-        {
-            long ts = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            Readings.TryAdd(ts, reading);
+        public void AddReading(double reading, long timestamp)
+        {            
+            Readings.TryAdd(timestamp, reading);
         }
 
         public double SumReadings() =>

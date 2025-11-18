@@ -10,7 +10,7 @@ enum TelemetryState { normal, paused }
 
 class ServerHandler {
   static Logger logger = Logger(
-    level: Level.error, // only log errors
+    level: Level.all, // only log errors
     printer: PrettyPrinter(
       methodCount: 0,
       printEmojis: false,
@@ -25,6 +25,9 @@ class ServerHandler {
 
   // Reactable to hold the current bill value
   Reactable<String> billReactable = Reactable("");
+
+  // Reactable to hold the current bill date
+  Reactable<String> billDateReactable = Reactable("");
 
   // state to track whether readings should be paused or active
   TelemetryState state = TelemetryState.normal;
@@ -77,27 +80,33 @@ class ServerHandler {
     if (state == TelemetryState.paused) return;
 
     // skip if not connected
-    if (hubConn.state != HubConnectionState.Connected) return;
+    if (hubConn.state != HubConnectionState.Connected) {
+      logger.e("Server has disconnected.");
+      return;
+    }
     if (reading.isNaN || reading.isInfinite || reading < 0) {
       logger.e("Client-side validation failed: Invalid reading- Must be a positive decimal.");
       return;
     }
 
     try {
-      await hubConn.send("CalculateNewBill", args: [billReactable.value, reading]);
+      DateTime nowDate = DateTime.now().toUtc();
+      int nowEpoch = nowDate.millisecondsSinceEpoch;
+      await hubConn.send("CalculateNewBill", args: [billReactable.value, reading, nowEpoch]);
       logger.i("Sent new reading to server: $reading with current bill: ${billReactable.value}");
     } catch (e) {
       logger.e("Failed to send reading: $e");
     }
   }
 
-  setBill(List? result) {
+  setGuiValues(List? result) {
     billReactable.value = result?[0];
+    billDateReactable.value = result?[1];
   }
 
   registerInitialHandler() {
-    hubConn.on("receiveInitialBill", setBill);
-    hubConn.on("calculateBill", setBill);
+    hubConn.on("receiveInitialBill", setGuiValues);
+    hubConn.on("calculateBill", setGuiValues);
 
     // listen for error messages from the server and log them
     hubConn.on("error", (args) {
