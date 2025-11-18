@@ -6,19 +6,17 @@ import 'package:signalr_netcore/signalr_client.dart';
 
 import 'package:logger/logger.dart';
 
-// Configure logger to only show errors (no info/warnings/debug)
-final logger = Logger(
-  level: Level.error, // only log errors
-  printer: PrettyPrinter(
-    methodCount: 0,
-    printEmojis: false,
-  ),
-);
-
 enum TelemetryState { normal, paused }
 
 class ServerHandler {
-  static Logger logger = Logger();
+  static Logger logger = Logger(
+    level: Level.error, // only log errors
+    printer: PrettyPrinter(
+      methodCount: 0,
+      printEmojis: false,
+    ),
+  );
+
   late HubConnection hubConn;
   late HttpConnectionOptions _httpConOpts;
 
@@ -40,8 +38,7 @@ class ServerHandler {
     registerInitialHandler(); // handlers must be registered before starting connection
   }
 
-  void setupConnection() {
-    logger.i("Setting up server connection to https://localhost:5001...");
+  void setupConnection() {    
     // create HTTPConnectionOptions with accessTokenFactory
     _httpConOpts = HttpConnectionOptions(
       accessTokenFactory: () async => clientAPIToken,
@@ -54,23 +51,12 @@ class ServerHandler {
     hubConn = HubConnectionBuilder()
         .withUrl("https://localhost:5001/hubs/connect", options: httpConOptions)
         .withAutomaticReconnect()
-        .build();
+        .build(); 
+  }
 
-    hubConn.on("gridStatus", (args) {
-      if (args == null || args.isEmpty) return;
-      final msg = args.first as Map<dynamic, dynamic>;
-      final status = (msg["status"] as String?) ?? "";
-      final title = (msg["title"] as String?) ?? "Status update";
-      final body = (msg["message"] as String?) ?? "";
-
-      if (status == "DOWN") {
-        state = TelemetryState.paused;
-        showBanner?.call(title, body);
-      } else if (status == "UP") {
-        state = TelemetryState.normal;
-        hideBanner?.call();
-      }
-    });
+  // validate client's token for authentication
+  bool validateToken(String token) {
+    return token == clientAPIToken;
   }
 
   HttpConnectionOptions get httpConOptions => _httpConOpts;
@@ -99,6 +85,7 @@ class ServerHandler {
 
     try {
       await hubConn.send("CalculateNewBill", args: [billReactable.value, reading]);
+      logger.i("Sent new reading to server: $reading with current bill: ${billReactable.value}");
     } catch (e) {
       logger.e("Failed to send reading: $e");
     }
@@ -120,10 +107,28 @@ class ServerHandler {
         logger.e("Unknown server error");
       }
     });
+
+    hubConn.on("gridStatus", (args) {
+      if (args == null || args.isEmpty) return;
+      final msg = args.first as Map<dynamic, dynamic>;
+      final status = (msg["status"] as String?) ?? "";
+      final title = (msg["title"] as String?) ?? "Status update";
+      final body = (msg["message"] as String?) ?? "";
+
+      if (status == "DOWN") {
+        state = TelemetryState.paused;
+        showBanner?.call(title, body);
+      } else if (status == "UP") {
+        state = TelemetryState.normal;
+        hideBanner?.call();
+      }
+    });
   }
 
   initServerConnection() async {
     // starts the connection to the server (single hub only)
+    logger.i("Setting up server connection to https://localhost:5001...");
     await hubConn.start();
+    logger.i("Server connection setup complete.");
   }
 }

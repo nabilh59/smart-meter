@@ -1,4 +1,5 @@
-using SmartMeter.Hubs;
+using SmartMeterServer.Hubs;
+using SmartMeterServer.Models;
 using System.Globalization;
 using System.Linq;
 
@@ -11,11 +12,10 @@ builder.Services.AddSingleton<IMeterStore, MeterStore>();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
-        policy.AllowAnyOrigin()
+    options.AddPolicy("AllowSpecificOrigin", policy =>
+        policy.WithOrigins("https://localhost:5001") // Allow requests from this url
               .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials()
+              .AllowAnyMethod() // Allow all http methods
               .SetIsOriginAllowed(_ => true)); // dev-friendly; tighten later
 });
 
@@ -32,7 +32,7 @@ if (!app.Environment.IsDevelopment())
 // app.UseHttpsRedirection();  // you had this commented out; ok for local dev
 app.UseStaticFiles();
 app.UseRouting();
-app.UseCors("AllowAll");
+app.UseCors("AllowSpecificOrigin");
 app.UseAuthorization();
 app.MapRazorPages();
 app.MapHub<FirstHub>("/hubs/connect");
