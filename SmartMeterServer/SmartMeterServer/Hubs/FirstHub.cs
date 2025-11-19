@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using SmartMeterServer.Logging;
+using Microsoft.AspNetCore.SignalR;
 using System.Collections.Concurrent;
 using SmartMeterServer.Models; 
 using System.Globalization;
@@ -42,10 +43,24 @@ namespace SmartMeterServer.Hubs
                     DateTime.UtcNow
                   );
 
-            await Clients.Caller.SendAsync("gridStatus", msg);
+            try
+            {
+                await Clients.Caller.SendAsync("gridStatus", msg);
+            }
+            catch
+            {
+                ServerErrorLog.Write(clientID, "SEND_FAILURE");
+            }
 
-            string billTimestamp = DateTime.Now.ToString("H:mm ddd, dd MMM yyyy");
-            await Clients.Caller.SendAsync("receiveInitialBill", _store.initialBill, billTimestamp);
+            try
+            {
+                string errorBillTimestamp = DateTime.Now.ToString("H:mm ddd, dd MMM yyyy");
+                await Clients.Caller.SendAsync("receiveInitialBill", _store.initialBill, errorBillTimestamp);
+            }
+            catch
+            {
+                ServerErrorLog.Write(clientID, "SEND_FAILURE");
+            }
 
             await base.OnConnectedAsync();
         }
@@ -53,37 +68,60 @@ namespace SmartMeterServer.Hubs
         public override async Task OnDisconnectedAsync(System.Exception? exception)
         {
             string clientID = Context.ConnectionId;
+            ServerErrorLog.Write(clientID , "CLIENT_DISCONNECTED");
             _store.RemoveMeter(clientID);
             await base.OnDisconnectedAsync(exception);
         }
 
         public async Task CalculateNewBill(string currentTotalBill, double newReading, long readingTimestamp)
         {
+            string clientID = Context.ConnectionId;
             // validate new reading
             if (double.IsNaN(newReading) || double.IsInfinity(newReading) || newReading < 0)
             {
-                await Clients.Caller.SendAsync("error", "Invalid reading - must be a positive decimal.");
+                ServerErrorLog.Write(clientID, "INVALID_MESSAGE");
+                try
+                {
+                    await Clients.Caller.SendAsync("error", "Invalid reading - must be a positive decimal.");
+                }
+                catch
+                {
+                    ServerErrorLog.Write(clientID, "SEND_FAILURE");
+                }
                 return;
             }
 
-            string clientID = Context.ConnectionId;
             var meter = _store.GetOrCreateMeter(clientID);
 
             // store the reading (for history/debug)
             meter.AddReading(newReading, readingTimestamp);
-
-            // compute cost of this single reading
-            double cost = newReading * _store.PricePerKwh;
-
-            // add cost to client-supplied total
-            double newTotal = Convert.ToDouble(currentTotalBill) + cost;
-            newTotal = System.Math.Round(newTotal, 2);
+            double cost;
+            double newTotal;
+            try
+            {
+                // compute cost of this single reading
+                cost = newReading * _store.PricePerKwh;
+                // add cost to client-supplied total
+                newTotal = Convert.ToDouble(currentTotalBill) + cost;
+                newTotal = System.Math.Round(newTotal, 2);
+            }
+            catch
+            {
+                ServerErrorLog.Write(clientID, "PROCESSING_ERROR");
+                return;
+            }
 
             // format before sending back to client with timestamp
-            string formattedNewTotal = newTotal.ToString("0.00");
-            string billTimestamp = DateTime.Now.ToString("H:mm ddd, dd MMM yyyy");
-            
-            await Clients.Caller.SendAsync("calculateBill", formattedNewTotal, billTimestamp);
+            try
+            {
+                string formattedNewTotal = newTotal.ToString("0.00");
+                string billTimestamp = DateTime.Now.ToString("H:mm ddd, dd MMM yyyy");
+                await Clients.Caller.SendAsync("calculateBill", formattedNewTotal, billTimestamp);
+            }
+            catch
+            {
+                ServerErrorLog.Write(clientID, "SEND_FAILURE");
+            }
         }
     }
 }
