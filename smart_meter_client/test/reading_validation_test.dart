@@ -2,6 +2,7 @@ import 'package:logger/logger.dart';
 import 'package:mockito/mockito.dart';
 import 'package:smart_meter_client/handler.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:smart_meter_client/states.dart';
 import 'mock_hubConn_test.mocks.dart';
 
 class MockLogger extends Logger {
@@ -22,18 +23,20 @@ void main() {
     late MockHubConnection mockConn;
 
     setUp(() {
-      mockLogger = MockLogger();
-      ServerHandler.logger = mockLogger;
-      serverHandler = ServerHandler();
+      mockLogger = MockLogger();      
       mockConn = MockHubConnection();
-      serverHandler.hubConn = mockConn;
+      serverHandler = ServerHandler(injected: mockConn);
+      serverHandler.state = TelemetryState.normal;
     });
 
     test('Verify valid reading is sent to server', () async {
       when(mockConn.send(any, args: anyNamed('args'))).thenAnswer((_) async => null);      
       await serverHandler.sendReading(22.5);
 
-      verify(mockConn.send("CalculateNewBill", args: [0.0, 22.5])).called(1);
+      DateTime nowDate = DateTime.now().toUtc();
+      int nowEpoch = nowDate.millisecondsSinceEpoch;
+
+      verify(mockConn.send("CalculateNewBill", args: [0.0, 22.5, nowEpoch])).called(1);
       expect(mockLogger.logs.isEmpty, true);
     });
 
