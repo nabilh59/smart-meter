@@ -37,12 +37,16 @@ class ServerHandler {
 
   double lastReadingTotal = 0.0;
 
-  bool isReconnecting = false;
-
-  ServerHandler() {
-    setupConnection();
-    registerInitialHandler(); // handlers must be registered before starting connection
+  ServerHandler({HubConnection? injected}) {
+    // allows injection of a mock HubConnection for testing purposes
+    if (injected != null) {
+      hubConn = injected;
+    } else {
+      setupConnection();
+    }
+    registerInitialHandler();
   }
+
 
   void setupConnection() {    
     // create HTTPConnectionOptions with accessTokenFactory
