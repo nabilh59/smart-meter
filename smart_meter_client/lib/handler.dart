@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math';
-
 import 'package:reactable/reactable.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 
@@ -35,6 +34,8 @@ class ServerHandler {
   // optional UI callbacks (used by the home_page widget)
   void Function(String title, String body)? showBanner;
   void Function()? hideBanner;
+
+  double lastReadingTotal = 0.0;
 
   ServerHandler({HubConnection? injected}) {
     // allows injection of a mock HubConnection for testing purposes
@@ -72,24 +73,30 @@ class ServerHandler {
 
   // sends a new reading to the server every 15 to 60 seconds
   sendReadings() {
-    int duration = Random().nextInt(45) + 15; // random number between 15 and 60
+    int duration = 2; // random number between 15 and 60
 
     Future.delayed(Duration(seconds: duration), () {
       double reading = Random().nextDouble(); // random number between 0.0 and 1.0
+      
       sendReading(reading);
-      sendReadings(); // recursive so that a new random reading and random delay is generated each time
+      sendReadings(); // recursive so that a new random reading and random delay is generated each time 
     });
+    
   }
 
   sendReading(double reading) async {
-    // if grid is down, drop the reading and do not send it to the server
-    if (state == TelemetryState.paused) return;
-
-    // skip if not connected
-    if (hubConn.state != HubConnectionState.Connected) {
-      logger.e("Server has disconnected.");
+    // if grid is down or the server is down, locally store the reading (until things are back up)
+    if (state == TelemetryState.paused) {
+      showBanner?.call("Temporary grid interruption", "We can’t calculate your bill right now due to a grid issue. No action is needed.");
+      return;
+    } else if (hubConn.state != HubConnectionState.Connected) {
+      showBanner?.call("Server Issue", "The server is down. Please wait for reconnection...");
+      lastReadingTotal += reading;
+      logger.e("Server disconnected.");
       return;
     }
+
+    // client-side validation of reading
     if (reading.isNaN || reading.isInfinite || reading < 0) {
       logger.e("Client-side validation failed: Invalid reading- Must be a positive decimal.");
       return;
@@ -98,6 +105,7 @@ class ServerHandler {
     try {
       DateTime nowDate = DateTime.now().toUtc();
       int nowEpoch = nowDate.millisecondsSinceEpoch;
+
       await hubConn.send("CalculateNewBill", args: [billReactable.value, reading, nowEpoch]);
       logger.i("Sent new reading to server: $reading with current bill: ${billReactable.value}");
     } catch (e) {
@@ -111,6 +119,7 @@ class ServerHandler {
   }
 
   registerInitialHandler() {
+    logger.i("Registering initial handlers...");
     hubConn.on("receiveInitialBill", setGuiValues);
     hubConn.on("calculateBill", setGuiValues);
 
@@ -137,6 +146,14 @@ class ServerHandler {
         state = TelemetryState.normal;
         hideBanner?.call();
       }
+    });
+
+    // handles reconnection events
+    hubConn.onreconnected(({connectionId}) {
+      showBanner?.call("Server is back online", "Retrying connection...");
+      sendReading(lastReadingTotal);
+      lastReadingTotal = 0.0;
+      logger.i("Reconnected to server. Keeping last valid bill: ${billReactable.value}");
     });
   }
 
