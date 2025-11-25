@@ -150,7 +150,6 @@ class ServerHandler {
 
     // handles reconnection events
     hubConn.onreconnected(({connectionId}) {
-      showBanner?.call("Server is back online", "Retrying connection...");
       sendReading(lastReadingTotal);
       lastReadingTotal = 0.0;
       logger.i("Reconnected to server. Keeping last valid bill: ${billReactable.value}");
