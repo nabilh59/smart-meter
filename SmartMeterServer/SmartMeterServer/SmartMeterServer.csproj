@@ -6,4 +6,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="SmartMeterServer.Tests\**" />
+    <Content Remove="SmartMeterServer.Tests\**" />
+    <EmbeddedResource Remove="SmartMeterServer.Tests\**" />
+    <None Remove="SmartMeterServer.Tests\**" />
+  </ItemGroup>
+
 </Project>
