@@ -93,24 +93,24 @@ namespace SmartMeterServer.Tests
             string currentBill = "50.00";
             double reading = 10.0;
             long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            
+            string expectedCost = "51.50";
 
             // Act
             await _hub.CalculateNewBill(currentBill, reading, timestamp);
 
             // Assert
             Assert.AreEqual(1, meter.ReadingCount);
-            double expectedCost = 10.0 * 0.15; // 1.50
-            double expectedTotal = 50.00 + 1.50; // 51.50
 
             _mockClientProxy.Verify(
                 c => c.SendCoreAsync(
                     "calculateBill",
-                    It.Is<object[]>(o => o.Length == 2 && o[0].ToString() == "51.50"),
+                    It.Is<object[]>(o => o.Length == 2 && o[0].ToString() == expectedCost),
                     default),
                 Times.Once);
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(double.NaN)]
         [DataRow(double.PositiveInfinity)]
         [DataRow(double.NegativeInfinity)]
@@ -144,14 +144,14 @@ namespace SmartMeterServer.Tests
             _mockStore.Setup(s => s.GetOrCreateMeter("test-connection-id")).Returns(meter);
             _mockStore.Setup(s => s.PricePerKwh).Returns(0.15);
             string currentBill = "50.00";
-            double reading = 1.234567; // will round to 1.23
+            double reading = 1.234567;
             long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
             // Act
             await _hub.CalculateNewBill(currentBill, reading, timestamp);
 
             // Assert
-            double expectedCost = 1.23 * 0.15; // 0.1845
+            double expectedCost = 1.234567 * 0.15; // 0.1845
             double expectedTotal = Math.Round(50.00 + expectedCost, 2); // 50.18
 
             _mockClientProxy.Verify(

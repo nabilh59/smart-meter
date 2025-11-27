@@ -19,11 +19,9 @@ namespace SmartMeterServer.Models
         }
 
         // Add a reading and return the timestamp used (Unix ms)
-        public double AddReading(double reading, long timestamp)
-        {            
-            double rounded = Math.Round(reading, 2, MidpointRounding.AwayFromZero);
-            Readings.TryAdd(timestamp, rounded);
-            return rounded; // return the rounded reading, not the timestamp
+        public void AddReading(double reading, long timestamp)
+        {
+            Readings.TryAdd(timestamp, reading);
         }
 
         public double SumReadings() =>
