@@ -12,7 +12,7 @@ namespace SmartMeterServer.Hubs
         private readonly IMeterStore _store;
 
         // electricity price per kWh here
-        
+
 
         public FirstHub(IMeterStore store)
         {
@@ -57,6 +57,24 @@ namespace SmartMeterServer.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
+        private List<string> formatBillForClientUse(double bill)
+        {
+            // format before sending back to client with timestamp
+            string formattedNewTotal = bill.ToString("0.00");
+            string billTimestamp = DateTime.Now.ToString("H:mm ddd, dd MMM yyyy");
+
+            return new List<string> { formattedNewTotal, billTimestamp };
+        }
+
+        private void storeReadings(string currentTotalBill, double newReading, long readingTimestamp)
+        {
+            string clientID = Context.ConnectionId;
+            var meter = _store.GetOrCreateMeter(clientID);
+
+            // store the reading (for history/debug)
+            meter.AddReading(newReading, readingTimestamp);
+        }
+
         public async Task CalculateNewBill(string currentTotalBill, double newReading, long readingTimestamp)
         {
             // validate new reading
@@ -66,11 +84,7 @@ namespace SmartMeterServer.Hubs
                 return;
             }
 
-            string clientID = Context.ConnectionId;
-            var meter = _store.GetOrCreateMeter(clientID);
-
-            // store the reading (for history/debug)
-            meter.AddReading(newReading, readingTimestamp);
+            storeReadings(currentTotalBill, newReading, readingTimestamp);
 
             // compute cost of this single reading
             double cost = newReading * _store.PricePerKwh;
@@ -79,11 +93,12 @@ namespace SmartMeterServer.Hubs
             double newTotal = Convert.ToDouble(currentTotalBill) + cost;
             newTotal = System.Math.Round(newTotal, 2);
 
-            // format before sending back to client with timestamp
-            string formattedNewTotal = newTotal.ToString("0.00");
-            string billTimestamp = DateTime.Now.ToString("H:mm ddd, dd MMM yyyy");
-            
-            await Clients.Caller.SendAsync("calculateBill", formattedNewTotal, billTimestamp);
+            List<string> formattedValues;
+            formattedValues = formatBillForClientUse(newTotal);
+            string total = formattedValues[0];
+            string timestamp = formattedValues[1];
+
+           await Clients.Caller.SendAsync("calculateBill", total, timestamp);
         }
     }
 }
