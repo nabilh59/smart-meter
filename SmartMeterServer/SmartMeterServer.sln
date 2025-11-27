@@ -5,7 +5,7 @@ VisualStudioVersion = 17.14.36121.58
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartMeterServer", "SmartMeterServer\SmartMeterServer.csproj", "{44755899-811E-489D-878C-B13866B4589E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartMeterServer.Tests", "SmartMeterServer.Tests\SmartMeterServer.Tests.csproj", "{F9276ED4-705E-4EAF-8803-39519272C3AD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartMeterServer_NET.Test", "SmartMeterServer_NET.Test\SmartMeterServer_NET.Test.csproj", "{C84E790A-1CDF-43AA-80BA-1F76640FFC72}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{44755899-811E-489D-878C-B13866B4589E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{44755899-811E-489D-878C-B13866B4589E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{44755899-811E-489D-878C-B13866B4589E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F9276ED4-705E-4EAF-8803-39519272C3AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F9276ED4-705E-4EAF-8803-39519272C3AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F9276ED4-705E-4EAF-8803-39519272C3AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F9276ED4-705E-4EAF-8803-39519272C3AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C84E790A-1CDF-43AA-80BA-1F76640FFC72}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C84E790A-1CDF-43AA-80BA-1F76640FFC72}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C84E790A-1CDF-43AA-80BA-1F76640FFC72}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C84E790A-1CDF-43AA-80BA-1F76640FFC72}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
