@@ -36,10 +36,15 @@ class ServerHandler {
   void Function(String title, String body)? showBanner;
   void Function()? hideBanner;
 
-  ServerHandler() {
-    setupConnection();
-    registerInitialHandler(); // handlers must be registered before starting connection
+  ServerHandler({HubConnection? injected}) {
+    if (injected != null) {
+      hubConn = injected;      // used only in tests
+    } else {
+      setupConnection();        // used in your real app
+    }
+    registerInitialHandler();
   }
+
 
   void setupConnection() {    
     // create HTTPConnectionOptions with accessTokenFactory
