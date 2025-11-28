@@ -16,6 +16,6 @@ Now a client is running.
 To run multiple clients, repeat step 2.
 
 ## AITS statement
-The AITS desciptor for this assignment was 2.
+The AITS descriptor for this assignment was 2.
 No AI was used for any part of this assignment.
 
