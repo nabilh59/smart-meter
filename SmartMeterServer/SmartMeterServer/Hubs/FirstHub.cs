@@ -81,19 +81,11 @@ namespace SmartMeterServer.Hubs
 
         private void storeReadings(string currentTotalBill, double newReading, long readingTimestamp)
         {
-            try
-            {
                 string clientID = Context.ConnectionId;
                 var meter = _store.GetOrCreateMeter(clientID);
 
                 // store the reading (for history/debug)
-                meter.AddReading(newReading, readingTimestamp);
-            }
-            catch
-            {
-                ServerErrorLog.Write(clientID, "PROCESSING_ERROR");
-                return;
-            }        
+                meter.AddReading(newReading, readingTimestamp);  
         }
 
         public async Task CalculateNewBill(string currentTotalBill, double newReading, long readingTimestamp)
@@ -114,7 +106,16 @@ namespace SmartMeterServer.Hubs
                 return;
             }
 
-            storeReadings(currentTotalBill, newReading, readingTimestamp);
+            try
+            {
+                storeReadings(currentTotalBill, newReading, readingTimestamp);
+            }
+            
+            catch
+            {
+                ServerErrorLog.Write(clientID, "PROCESSING_ERROR");
+                return;
+            }
 
             // compute cost of this single reading
             double cost = newReading * _store.PricePerKwh;
