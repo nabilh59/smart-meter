@@ -11,7 +11,7 @@ Now the server is running.
 
   `flutter build windows`
   
-3) Navigate to the directory printed to the command line after build is completes.
+3) Navigate to the directory printed to the command line after build is complete.
 
 4) Double click on smart_meter_client.exe to run the client
 
