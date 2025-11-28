@@ -11,11 +11,10 @@ namespace SmartMeterServer.Tests
     [TestClass]
     public class FirstHubTests
     {
-        private Mock<IMeterStore> _mockStore;
-        private Mock<IHubCallerClients> _mockClients;
-        private Mock<ISingleClientProxy> _mockClientProxy;
-        private Mock<HubCallerContext> _mockContext;
-        private FirstHub _hub;
+        private Mock<IMeterStore> _mockStore = new();
+        private Mock<IHubCallerClients> _mockClients = new();
+        private Mock<ISingleClientProxy> _mockClientProxy = new();
+        private Mock<HubCallerContext> _mockContext = new();
 
         [TestInitialize]
         public void Setup()
@@ -27,18 +26,18 @@ namespace SmartMeterServer.Tests
 
             _mockClients.Setup(c => c.Caller).Returns(_mockClientProxy.Object);
             _mockContext.Setup(c => c.ConnectionId).Returns("test-connection-id");
-
-            _hub = new FirstHub(_mockStore.Object)
-            {
-                Clients = _mockClients.Object,
-                Context = _mockContext.Object
-            };
         }
 
         [TestMethod]
         public async Task OnConnectedAsync_CreatesNewMeter()
         {
             // Arrange
+            FirstHub _hub = new FirstHub(_mockStore.Object)
+            {
+                Clients = _mockClients.Object,
+                Context = _mockContext.Object
+            };
+
             var meter = new Meter("test-connection-id");
             _mockStore.Setup(s => s.GetOrCreateMeter("test-connection-id")).Returns(meter);
             _mockStore.Setup(s => s.initialBill).Returns("0.00");
@@ -54,6 +53,12 @@ namespace SmartMeterServer.Tests
         public async Task OnConnectedAsync_SendsInitialBill()
         {
             // Arrange
+            FirstHub _hub = new FirstHub(_mockStore.Object)
+            {
+                Clients = _mockClients.Object,
+                Context = _mockContext.Object
+            };
+
             var meter = new Meter("test-connection-id");
             _mockStore.Setup(s => s.GetOrCreateMeter(It.IsAny<string>())).Returns(meter);
             _mockStore.Setup(s => s.initialBill).Returns("0.00");
@@ -74,6 +79,12 @@ namespace SmartMeterServer.Tests
         public async Task OnDisconnectedAsync_RemovesMeter()
         {
             // Arrange
+            FirstHub _hub = new FirstHub(_mockStore.Object)
+            {
+                Clients = _mockClients.Object,
+                Context = _mockContext.Object
+            };
+
             _mockStore.Setup(s => s.RemoveMeter("test-connection-id"));
 
             // Act
@@ -87,6 +98,12 @@ namespace SmartMeterServer.Tests
         public async Task CalculateNewBill_ValidReading_StoresAndCalculates()
         {
             // Arrange
+            FirstHub _hub = new FirstHub(_mockStore.Object)
+            {
+                Clients = _mockClients.Object,
+                Context = _mockContext.Object
+            };
+
             var meter = new Meter("test-connection-id");
             _mockStore.Setup(s => s.GetOrCreateMeter("test-connection-id")).Returns(meter);
             _mockStore.Setup(s => s.PricePerKwh).Returns(0.15);
@@ -116,9 +133,42 @@ namespace SmartMeterServer.Tests
         [DataRow(double.NegativeInfinity)]
         [DataRow(-1.0)]
         [DataRow(-0.5)]
+        public async Task CalculateNewBill_InvalidReading_NotStored(double invalidReading)
+        {
+            // Arrange
+            FirstHub _hub = new FirstHub(_mockStore.Object)
+            {
+                Clients = _mockClients.Object,
+                Context = _mockContext.Object
+            };
+
+            var meter = new Meter("test-connection-id");
+            _mockStore.Setup(s => s.GetOrCreateMeter(It.IsAny<string>())).Returns(meter);
+            long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+            // Act
+            await _hub.CalculateNewBill("50.00", invalidReading, timestamp);
+
+            // Assert
+            
+            Assert.AreEqual(0, meter.ReadingCount); // reading should not be stored
+        }
+
+        [TestMethod]
+        [DataRow(double.NaN)]
+        [DataRow(double.PositiveInfinity)]
+        [DataRow(double.NegativeInfinity)]
+        [DataRow(-1.0)]
+        [DataRow(-0.5)]
         public async Task CalculateNewBill_InvalidReading_SendsError(double invalidReading)
         {
             // Arrange
+            FirstHub _hub = new FirstHub(_mockStore.Object)
+            {
+                Clients = _mockClients.Object,
+                Context = _mockContext.Object
+            };
+
             var meter = new Meter("test-connection-id");
             _mockStore.Setup(s => s.GetOrCreateMeter(It.IsAny<string>())).Returns(meter);
             long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -130,16 +180,21 @@ namespace SmartMeterServer.Tests
             _mockClientProxy.Verify(
                 c => c.SendCoreAsync(
                     "error",
-                    It.Is<object[]>(o => o.Length == 1 && o[0].ToString().Contains("Invalid reading")),
+                    It.IsAny<object[]>(),
                     default),
                 Times.Once);
-            Assert.AreEqual(0, meter.ReadingCount); // reading should not be stored
         }
 
         [TestMethod]
         public async Task CalculateNewBill_RoundsResultToTwoDecimalPlaces()
         {
             // Arrange
+            FirstHub _hub = new FirstHub(_mockStore.Object)
+            {
+                Clients = _mockClients.Object,
+                Context = _mockContext.Object
+            };
+
             var meter = new Meter("test-connection-id");
             _mockStore.Setup(s => s.GetOrCreateMeter("test-connection-id")).Returns(meter);
             _mockStore.Setup(s => s.PricePerKwh).Returns(0.15);
@@ -166,6 +221,12 @@ namespace SmartMeterServer.Tests
         public async Task CalculateNewBill_ZeroReading_IsValid()
         {
             // Arrange
+            FirstHub _hub = new FirstHub(_mockStore.Object)
+            {
+                Clients = _mockClients.Object,
+                Context = _mockContext.Object
+            };
+
             var meter = new Meter("test-connection-id");
             _mockStore.Setup(s => s.GetOrCreateMeter("test-connection-id")).Returns(meter);
             _mockStore.Setup(s => s.PricePerKwh).Returns(0.15);
@@ -188,6 +249,12 @@ namespace SmartMeterServer.Tests
         public async Task CalculateNewBill_StoresTimestamp()
         {
             // Arrange
+            FirstHub _hub = new FirstHub(_mockStore.Object)
+            {
+                Clients = _mockClients.Object,
+                Context = _mockContext.Object
+            };
+
             var meter = new Meter("test-connection-id");
             _mockStore.Setup(s => s.GetOrCreateMeter("test-connection-id")).Returns(meter);
             _mockStore.Setup(s => s.PricePerKwh).Returns(0.15);

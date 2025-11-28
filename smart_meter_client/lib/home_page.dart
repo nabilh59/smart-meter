@@ -60,7 +60,7 @@ class _SmartMeterAppPageState extends State<SmartMeterAppPage> {
         //  show an error version of the _SmartMeterConnectingPage
         if (snapshot.hasError) { 
           return _SmartMeterConnectingPage(
-            text: snapshot.error.toString(),
+            text: "Error connecting to server. Please try again later.",
             icon: const Icon(Icons.error, color: Colors.red),
           );
         }

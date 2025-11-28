@@ -113,7 +113,7 @@ namespace SmartMeterServer.Tests
             var all = store.GetAll();
 
             // Assert
-            Assert.IsTrue(all.Count >= 2); // may contain meters from other tests
+            Assert.IsGreaterThanOrEqualTo(2, all.Count); // may contain meters from other tests
             Assert.IsTrue(all.Any(kvp => kvp.Key == id1));
             Assert.IsTrue(all.Any(kvp => kvp.Key == id2));
         }

@@ -28,7 +28,7 @@ namespace SmartMeterServer.Models
 
         private static readonly object _lock = new();
 
-        private static MeterStore _instance;
+        private static MeterStore? _instance;
 
         public static MeterStore getInstance()
         {

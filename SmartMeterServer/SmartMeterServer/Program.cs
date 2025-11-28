@@ -74,7 +74,7 @@ app.MapGet("/debug/readings", (IMeterStore store) =>
 
             var sumReadings = meter.SumReadings();
             var totalCost = sumReadings * pricePerKwh;
-            var total = initial + totalCost;
+            var total = Convert.ToDouble(initial) + totalCost;
 
             return new
             {
@@ -83,9 +83,9 @@ app.MapGet("/debug/readings", (IMeterStore store) =>
                 readings = readings, // array of { timestamp, date, time, value }
                 sumReadings = sumReadings,
                 totalCost = totalCost,
-                totalCostFormatted = totalCost.ToString(culture),
+                totalCostFormatted = totalCost.ToString("0.00"),
                 totalBill = total,
-                totalBillFormatted = total.ToString(culture),
+                totalBillFormatted = total.ToString("0.00"),
                 initialBillFormatted = initial.ToString(culture)
             };
         });
