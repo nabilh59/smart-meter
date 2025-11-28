@@ -87,6 +87,7 @@ class ServerHandler {
   sendReading(double reading) async {
     // if grid is down or the server is down, locally store the reading (until things are back up)
     if (state == TelemetryState.paused) {
+      lastReadingTotal += reading;
       showBanner?.call("Temporary grid interruption", "We can’t calculate your bill right now due to a grid issue. No action is needed.");
       return;
     } else if (hubConn.state != HubConnectionState.Connected) {
