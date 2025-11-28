@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math';
 import 'package:reactable/reactable.dart';
 import 'package:signalr_netcore/signalr_client.dart';
@@ -60,28 +59,8 @@ class ServerHandler {
     // handles connection to server and communication with it (/hubs/connect matches what is in the server code)
     // changed http to https for TLS encryption (switch to http://localhost:5000 if using HTTP)
     hubConn = HubConnectionBuilder()
-        .withUrl(
-          "https://localhost:5001/hubs/connect",
-          options: httpConOptions,
-          httpClientFactory: () {
-            // Accept self-signed certificates only for localhost (safe for local development)
-            final client = HttpClient();
-            client.badCertificateCallback = (cert, host, port) {
-              if (host == 'localhost' || host == '127.0.0.1') return true;
-              return false;
-            };
-            return client;
-          },
-        )
-        .withAutomaticReconnect(
-          // explicit reconnect delays to make behavior consistent across builds
-          retryDelays: const [
-            Duration(seconds: 0),
-            Duration(seconds: 2),
-            Duration(seconds: 5),
-            Duration(seconds: 10),
-          ],
-        )
+        .withUrl("https://localhost:5001/hubs/connect", options: httpConOptions)
+        .withAutomaticReconnect()
         .build(); 
   }
 
@@ -172,40 +151,16 @@ class ServerHandler {
 
     // handles reconnection events
     hubConn.onreconnected(({connectionId}) {
-      logger.i("SignalR: onreconnected (connectionId=$connectionId)");
-      // attempt to send any accumulated readings
-      if (lastReadingTotal > 0) {
-        sendReading(lastReadingTotal);
-        lastReadingTotal = 0.0;
-      }
-      hideBanner?.call();
+      sendReading(lastReadingTotal);
+      lastReadingTotal = 0.0;
       logger.i("Reconnected to server. Keeping last valid bill: ${billReactable.value}");
-    });
-
-    // when starting to reconnect
-    hubConn.onreconnecting((error) {
-      logger.w("SignalR: onreconnecting: $error");
-      showBanner?.call("Reconnecting", "Attempting to reconnect to server...");
-    });
-
-    // when the connection is closed
-    hubConn.onclose(({error}) {
-      logger.e("SignalR: onclose: $error");
-      showBanner?.call("Server disconnected", "Connection to server was lost. Will retry automatically.");
     });
   }
 
   initServerConnection() async {
     // starts the connection to the server (single hub only)
     logger.i("Setting up server connection to https://localhost:5001...");
-    try {
-      await hubConn.start().timeout(const Duration(seconds: 15));
-      logger.i("Server connection setup complete.");
-      hideBanner?.call();
-    } catch (e) {
-      logger.e("Failed to start HubConnection: $e");
-      showBanner?.call("Error connecting to server", "$e");
-      rethrow;
-    }
+    await hubConn.start();
+    logger.i("Server connection setup complete.");
   }
 }

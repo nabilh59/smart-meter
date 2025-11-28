@@ -2,7 +2,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:smart_meter_client/handler.dart';
-import 'mock_hubConn_test.mocks.dart';
+import 'mock_hub_connection_test.mocks.dart';
 
 void main() {
   group('Grid status tests', () {
