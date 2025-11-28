@@ -20,8 +20,6 @@ void main() {
     final mockLogger = MockLogger();
     ServerHandler.logger = mockLogger;
     final mockConn = MockHubConnection();
-    final handler = ServerHandler();
-    handler.hubConn = mockConn;
 
     // mock the server sending an error message
     when(mockConn.on(any, any)).thenAnswer((invocation) {
@@ -33,7 +31,10 @@ void main() {
         callback(["Invalid reading- Must be a positive decimal."]);
       }
     });
+    when(mockConn.onreconnected(any)).thenReturn(null);
 
+    final handler = ServerHandler();
+    handler.hubConn = mockConn;
     handler.registerInitialHandler();
 
     // verify error message was logged correctly

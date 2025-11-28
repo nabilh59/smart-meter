@@ -23,6 +23,7 @@ void main() {
         }
       });
 
+      when(mockConn.onreconnected(any)).thenReturn(null);
       handler = ServerHandler(injected: mockConn);
     });
 

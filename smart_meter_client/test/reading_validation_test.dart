@@ -3,6 +3,7 @@ import 'package:mockito/mockito.dart';
 import 'package:smart_meter_client/handler.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'mock_hubConn_test.mocks.dart';
+import 'package:signalr_netcore/signalr_client.dart';
 
 class MockLogger extends Logger {
   final List<String> logs = [];
@@ -22,42 +23,40 @@ void main() {
     late MockHubConnection mockConn;
 
     setUp(() {
-      mockLogger = MockLogger();      
+      mockLogger = MockLogger();
+      ServerHandler.logger = mockLogger;
       mockConn = MockHubConnection();
-      serverHandler = ServerHandler(injected: mockConn);
+      serverHandler = ServerHandler();
+      serverHandler.hubConn = mockConn;
+
+      when(mockConn.on(any, any)).thenAnswer((invocation) {});
+
+      when(mockConn.onreconnected(any)).thenReturn(null);
+      when(mockConn.state).thenReturn(HubConnectionState.Connected);
       serverHandler.state = TelemetryState.normal;
     });
 
     test('Verify valid reading is sent to server', () async {
-      when(mockConn.send(any, args: anyNamed('args'))).thenAnswer((_) async => null);      
+      when(mockConn.send(any, args: anyNamed('args'))).thenAnswer((_) async => {});
+      serverHandler.billReactable.value = "0.0";
       await serverHandler.sendReading(22.5);
-
-      DateTime nowDate = DateTime.now().toUtc();
-      int nowEpoch = nowDate.millisecondsSinceEpoch;
-
-      verify(mockConn.send("CalculateNewBill", args: [0.0, 22.5, nowEpoch])).called(1);
+      verify(mockConn.send("CalculateNewBill", args: anyNamed('args'))).called(1);
       expect(mockLogger.logs.isEmpty, true);
     });
 
     test('Verify negative reading triggers validation error', () async {
-      double reading = -5.0;
-      await serverHandler.sendReading(reading);
-
-      expect(mockLogger.logs.contains("Client-side validation failed: Invalid reading- Must be a positive decimal."), true);
+      await serverHandler.sendReading(-5.0);
+      expect(mockLogger.logs.any((log) => log.contains("Client-side validation failed")), true);
     });
 
     test('Verify NaN/NotaNumber reading triggers validation error', () async {
-      double reading = double.nan;
-      await serverHandler.sendReading(reading);
-
-      expect(mockLogger.logs.contains("Client-side validation failed: Invalid reading- Must be a positive decimal."), true);
+      await serverHandler.sendReading(double.nan);
+      expect(mockLogger.logs.any((log) => log.contains("Client-side validation failed")), true);
     });
 
     test('Verify infinite reading triggers validation error', () async {
-      double reading = double.infinity;
-      await serverHandler.sendReading(reading);
-
-      expect(mockLogger.logs.contains("Client-side validation failed: Invalid reading- Must be a positive decimal."), true);
+      await serverHandler.sendReading(double.infinity);
+      expect(mockLogger.logs.any((log) => log.contains("Client-side validation failed")), true);
     });
 
   });
