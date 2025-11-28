@@ -7,7 +7,6 @@ namespace SmartMeterServer.Logging
     public static class ServerErrorLog
     {
         private static readonly string LogFilePath = "server_logs.csv";
-        private static int logCounter = 0;
         private static readonly object lockObj = new();
 
         static ServerErrorLog()
@@ -16,7 +15,7 @@ namespace SmartMeterServer.Logging
             if (!File.Exists(LogFilePath))
             {
                 File.WriteAllText(LogFilePath,
-                    "log_id,timestamp,connection_id,event\n");
+                    "Timestamp,Connection_id,Error\n");
             }
         }
 
@@ -24,11 +23,10 @@ namespace SmartMeterServer.Logging
         {
             lock (lockObj)
             {
-                logCounter++;
 
                 string timestamp = DateTime.UtcNow.ToString("o"); // ISO8601
 
-                string row = $"{logCounter},{timestamp},{connectionId},{eventType}\n";
+                string row = $"{timestamp},{connectionId},{eventType}\n";
 
                 File.AppendAllText(LogFilePath, row, Encoding.UTF8);
             }

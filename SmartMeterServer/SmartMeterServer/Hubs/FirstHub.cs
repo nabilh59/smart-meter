@@ -44,9 +44,9 @@ namespace SmartMeterServer.Hubs
             {
                 await Clients.Caller.SendAsync("gridStatus", msg);
             }
-            catch
+            catch (Exception e)
             {
-                ServerErrorLog.Write(clientID, "SEND_FAILURE");
+                ServerErrorLog.Write(clientID, $"SEND_FAILURE - {e.Message}");
             }
 
             try
@@ -54,9 +54,9 @@ namespace SmartMeterServer.Hubs
                 string errorBillTimestamp = DateTime.Now.ToString("H:mm ddd, dd MMM yyyy");
                 await Clients.Caller.SendAsync("receiveInitialBill", _store.initialBill, errorBillTimestamp);
             }
-            catch
+            catch (Exception e)
             {
-                ServerErrorLog.Write(clientID, "SEND_FAILURE");
+                ServerErrorLog.Write(clientID, $"SEND_FAILURE - {e.Message}");
             }
 
             await base.OnConnectedAsync();
@@ -94,14 +94,14 @@ namespace SmartMeterServer.Hubs
             // validate new reading
             if (double.IsNaN(newReading) || double.IsInfinity(newReading) || newReading < 0)
             {
-                ServerErrorLog.Write(clientID, "INVALID_MESSAGE");
+                ServerErrorLog.Write(clientID, $"INVALID_MESSAGE - {newReading}");
                 try
                 {
                     await Clients.Caller.SendAsync("error", "Invalid reading - must be a positive decimal.");
                 }
-                catch
+                catch (Exception e)
                 {
-                    ServerErrorLog.Write(clientID, "SEND_FAILURE");
+                    ServerErrorLog.Write(clientID, $"SEND_FAILURE - {e.Message}");
                 }
                 return;
             }
@@ -111,9 +111,9 @@ namespace SmartMeterServer.Hubs
                 storeReadings(currentTotalBill, newReading, readingTimestamp);
             }
             
-            catch
+            catch (Exception e)
             {
-                ServerErrorLog.Write(clientID, "PROCESSING_ERROR");
+                ServerErrorLog.Write(clientID, $"PROCESSING_ERROR - {e.Message}");
                 return;
             }
 
@@ -134,9 +134,9 @@ namespace SmartMeterServer.Hubs
             {                
                 await Clients.Caller.SendAsync("calculateBill", total, timestamp);
             }
-            catch
+            catch (Exception e)
             {
-                ServerErrorLog.Write(clientID, "SEND_FAILURE");
+                ServerErrorLog.Write(clientID, $"SEND_FAILURE - {e.Message}");
             }
         }
     }
