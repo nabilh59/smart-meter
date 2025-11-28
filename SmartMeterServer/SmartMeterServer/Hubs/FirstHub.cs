@@ -11,9 +11,6 @@ namespace SmartMeterServer.Hubs
     {
         private readonly IMeterStore _store;
 
-        // electricity price per kWh here
-        
-
         public FirstHub(IMeterStore store)
         {
             _store = store;
