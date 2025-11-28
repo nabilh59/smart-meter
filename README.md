@@ -9,11 +9,13 @@ Now the server is running.
 
 2) Open another command line. Navigate to smart-meter\smart_meter_client and run the following command:
 
-  `flutter run --release`
+  `flutter build windows`
   
-Now a client is running.
+3) In file explorer, navigate to the directory printed to the command line after build is complete.
 
-To run multiple clients, repeat step 2.
+4) Double click on smart_meter_client.exe to run the client
+
+To run multiple clients, repeat step 4.
 
 ## AITS statement
 The AITS descriptor for this assignment was 2.
