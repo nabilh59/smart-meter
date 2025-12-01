@@ -12,8 +12,6 @@ Now the server is running.
   `flutter build windows`
 
   `flutter build macos`
-
-  `flutter build linux`
   
 3) In file explorer, navigate to the directory printed to the command line after build is complete.
 
