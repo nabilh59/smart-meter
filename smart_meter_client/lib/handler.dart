@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:reactable/reactable.dart';
+import 'package:signalr_netcore/default_reconnect_policy.dart';
+import 'package:signalr_netcore/iretry_policy.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 
 import 'package:logger/logger.dart';
@@ -55,12 +57,16 @@ class ServerHandler {
       transport: HttpTransportType.WebSockets,
       skipNegotiation: true,
     );
+    
+    DefaultRetryPolicy rp = DefaultRetryPolicy(
+      retryDelays: [0, 2000, 5000, 10000, 30000, 60000, 70000, 80000],
+    );
 
     // handles connection to server and communication with it (/hubs/connect matches what is in the server code)
     // changed http to https for TLS encryption (switch to http://localhost:5000 if using HTTP)
     hubConn = HubConnectionBuilder()
         .withUrl("https://localhost:5001/hubs/connect", options: httpConOptions)
-        .withAutomaticReconnect()
+        .withAutomaticReconnect(reconnectPolicy: rp)
         .build(); 
   }
 
