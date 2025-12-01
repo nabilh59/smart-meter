@@ -21,7 +21,7 @@ namespace SmartMeterServer.Tests
             Assert.IsTrue(File.Exists(LogFile));
             var lines = File.ReadAllLines(LogFile);
 
-            Assert.AreEqual("log_id,timestamp,connection_id,event", lines[0]);
+            Assert.AreEqual("Timestamp,Connection_id,Error", lines[0]);
 
 
             string lastLine = lines[^1];
