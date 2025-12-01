@@ -12,14 +12,18 @@ Now the server is running.
   `flutter build windows`
 
   `flutter build macos`
-
-  `flutter build linux`
   
 3) In file explorer, navigate to the directory printed to the command line after build is complete.
 
-4) Double click on smart_meter_client.exe to run the client
+4) For Windows - Double click on smart_meter_client.exe to run the client
+   For MacOS - Double click on smart_meter_client.app to run the client
+   
 
-To run multiple clients, repeat step 4.
+For Windows - to run multiple clients, repeat step 4.
+
+For MacOS - run the following command multiple times to open multiple clients: 
+
+`open -n smart_meter_client.app` 
 
 ## AITS statement
 The AITS descriptor for this assignment was 2.
