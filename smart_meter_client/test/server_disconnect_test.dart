@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_meter_client/handler.dart';
 import 'package:logger/logger.dart';
 import 'package:mockito/mockito.dart';
-import 'mock_hubConn_test.mocks.dart';
+import 'mock_hub_connection_test.mocks.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 
 // mock logger to capture error messages
