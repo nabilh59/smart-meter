@@ -22,7 +22,7 @@ namespace SmartMeterServer.Controllers
                 var msg = new GridStatusMessage(
                     "grid.status", "1.0", "DOWN", "PAUSE_READINGS",
                     "Temporary grid interruption",
-                    "We can’t receive readings right now due to a grid issue. No action is needed.",
+                    "We can’t calculate your bill right now due to a grid issue. No action is needed.",
                     DateTime.UtcNow
                 );
                 await _hub.Clients.All.SendAsync("gridStatus", msg);

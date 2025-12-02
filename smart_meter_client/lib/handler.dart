@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 import 'package:reactable/reactable.dart';
 import 'package:signalr_netcore/default_reconnect_policy.dart';
-import 'package:signalr_netcore/iretry_policy.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 
 import 'package:logger/logger.dart';
@@ -151,6 +150,7 @@ class ServerHandler {
         showBanner?.call(title, body);
       } else if (status == "UP") {
         state = TelemetryState.normal;
+        lastReadingTotal = 0.0;
         hideBanner?.call();
       }
     });
