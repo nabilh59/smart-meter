@@ -150,17 +150,23 @@ class ServerHandler {
         showBanner?.call(title, body);
       } else if (status == "UP") {
         state = TelemetryState.normal;
-        lastReadingTotal = 0.0;
+        provideBacklogReadings(); 
         hideBanner?.call();
       }
     });
 
     // handles reconnection events
     hubConn.onreconnected(({connectionId}) {
-      sendReading(lastReadingTotal);
-      lastReadingTotal = 0.0;
+      provideBacklogReadings();
       logger.i("Reconnected to server. Keeping last valid bill: ${billReactable.value}");
     });
+  }
+
+  provideBacklogReadings(){
+    if (lastReadingTotal > 0.0){
+      sendReading(lastReadingTotal);
+    }      
+    lastReadingTotal = 0.0;
   }
 
   initServerConnection() async {
