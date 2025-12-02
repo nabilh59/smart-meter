@@ -16,6 +16,7 @@ Now the server is running.
 3) In file explorer, navigate to the directory printed to the command line after build is complete.
 
 4) For Windows - Double click on smart_meter_client.exe to run the client
+   
    For MacOS - Double click on smart_meter_client.app to run the client
    
 
