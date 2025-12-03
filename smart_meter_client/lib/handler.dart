@@ -56,10 +56,10 @@ class ServerHandler {
       transport: HttpTransportType.WebSockets,
       skipNegotiation: true,
     );
-    
+
     DefaultRetryPolicy rp = DefaultRetryPolicy(
       retryDelays: [0, 2000, 5000, 10000, 30000, 60000, 70000, 80000],
-    );
+    );    
 
     // handles connection to server and communication with it (/hubs/connect matches what is in the server code)
     // changed http to https for TLS encryption (switch to http://localhost:5000 if using HTTP)
@@ -124,9 +124,18 @@ class ServerHandler {
     billDateReactable.value = result?[1];
   }
 
+  setGuiValuesOnlyIfEmpty(List? result) {
+    if (billReactable.value.isEmpty) {
+      billReactable.value = result?[0];
+      billDateReactable.value = result?[1];
+    } else {
+      logger.i("Ignoring initial bill on reconnection. Keeping existing bill: ${billReactable.value}");
+    }
+  }
+ 
   registerInitialHandler() {
     logger.i("Registering initial handlers...");
-    hubConn.on("receiveInitialBill", setGuiValues);
+    hubConn.on("receiveInitialBill", setGuiValuesOnlyIfEmpty);
     hubConn.on("calculateBill", setGuiValues);
 
     // listen for error messages from the server and log them
@@ -159,6 +168,10 @@ class ServerHandler {
     hubConn.onreconnected(({connectionId}) {
       provideBacklogReadings();
       logger.i("Reconnected to server. Keeping last valid bill: ${billReactable.value}");
+    });
+
+    hubConn.onclose(({error}) {
+      logger.i("Server has been closed. Keeping last valid bill: ${billReactable.value}");
     });
   }
 
